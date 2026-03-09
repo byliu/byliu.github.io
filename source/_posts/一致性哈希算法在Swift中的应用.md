@@ -1,5 +1,6 @@
 ---
 title: 一致性哈希算法在Swift中的应用
+date: 2017-01-16 18:25:31
 categories:
 - OpenStack
 - Swift
