@@ -1,12 +1,396 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
-  
-  
-    
-    <entry>
-      <title><![CDATA[对象存储与负载均衡]]></title>
-      <url>http://byliu.github.io/2018/03/12/%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/</url>
-      <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>介绍常用的负载均衡手段</p>
+  <entry>
+    <title>给 Codex 加上系统通知：从沙箱限制到默认授权</title>
+    <url>/2026/03/09/codex-notification-strategy/</url>
+    <content><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我平时把 Codex 跑在 iTerm2 里。一个很实际的问题是：当它跑完任务，或者执行过程中需要我介入时，我不一定一直盯着终端窗口。</p>
+<p>需求很简单：</p>
+<ul>
+<li>任务完成时，给我一个系统级提醒</li>
+<li>需要我授权、补信息、做决策时，也给我一个系统级提醒</li>
+<li>最好像微信新消息一样，直接出现在 macOS 通知中心</li>
+</ul>
+<a id="more"></a>
+<h2 id="第一层方案：直接发-macOS-通知"><a href="#第一层方案：直接发-macOS-通知" class="headerlink" title="第一层方案：直接发 macOS 通知"></a>第一层方案：直接发 macOS 通知</h2><p>最自然的做法是直接调用 <code>osascript</code>：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">osascript -e <span class="string">'display notification "任务完成" with title "Codex" subtitle "任务完成" sound name "Glass"'</span></span><br></pre></td></tr></table></figure>
+<p>这样做在本机上是可行的，但很快遇到了第一个问题：<strong>Codex 的沙箱环境里连不上 macOS Notification Center</strong>。</p>
+<p>实际表现是 <code>osascript</code> 能执行，但会报 Notification Center 连接无效之类的错误。也就是说，通知能力不是没有，而是<strong>在沙箱里被系统边界挡住了</strong>。</p>
+<h2 id="第二层方案：改成提权发送"><a href="#第二层方案：改成提权发送" class="headerlink" title="第二层方案：改成提权发送"></a>第二层方案：改成提权发送</h2><p>既然沙箱发不了，下一步自然是改成提权发送：</p>
+<ul>
+<li>正常对话里继续给出文字说明</li>
+<li>到“任务完成”或“需要你协助”的节点时，额外执行一次提权通知</li>
+</ul>
+<p>这解决了沙箱问题，但又出现了第二个矛盾：<strong>如果每次发送通知都先弹一次授权确认，那提醒本身就不再“即时”了。</strong></p>
+<p>换句话说，通知机制本来是为了减少我盯终端的成本，结果如果它自己还要先等我确认，就失去了意义。</p>
+<h2 id="第三层方案：把约定做成全局规则"><a href="#第三层方案：把约定做成全局规则" class="headerlink" title="第三层方案：把约定做成全局规则"></a>第三层方案：把约定做成全局规则</h2><p>另一个现实问题是“新会话不知道这件事”。</p>
+<p>当前会话里说好了“完成或阻塞时要提醒我”，并不代表下一个窗口、下一次新开的 Codex 会话也知道这个约定。要想跨会话生效，必须把这条规则写进<strong>会话外的持久位置</strong>。</p>
+<p>最终我把规则放到了：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">~/.codex/AGENTS.md</span><br></pre></td></tr></table></figure>
+<p>核心约定是：</p>
+<ul>
+<li>每个会话都用中文简体回复</li>
+<li>任务完成或需要用户介入时，除了对话内说明，还要发送 macOS 系统通知</li>
+</ul>
+<p>这一步解决的是“<strong>新会话知不知道要通知</strong>”的问题。</p>
+<h2 id="第四层方案：不要放开任意-osascript，只放开专用通知脚本"><a href="#第四层方案：不要放开任意-osascript，只放开专用通知脚本" class="headerlink" title="第四层方案：不要放开任意 osascript，只放开专用通知脚本"></a>第四层方案：不要放开任意 <code>osascript</code>，只放开专用通知脚本</h2><p>真正稳定的方案不是“默认允许所有 <code>osascript -e</code>”，而是把通知能力收敛到一个固定脚本里。</p>
+<p>原因很直接：</p>
+<ul>
+<li>放开任意 <code>osascript -e</code>，授权范围太宽</li>
+<li>我真正需要默认允许的，其实只有“发一条系统通知”这一件事</li>
+</ul>
+<p>所以最终做法是：</p>
+<ol>
+<li>写一个专用通知脚本</li>
+<li>把这个脚本加入 Codex 的全局批准前缀规则</li>
+<li>让全局 <code>AGENTS.md</code> 统一要求后续会话调用这个脚本</li>
+</ol>
+<p>专用脚本如下：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/zsh</span></span><br><span class="line"><span class="built_in">set</span> -euo pipefail</span><br><span class="line"></span><br><span class="line">message=<span class="string">"<span class="variable">$&#123;1:-Codex 通知&#125;</span>"</span></span><br><span class="line">subtitle=<span class="string">"<span class="variable">$&#123;2:-任务完成&#125;</span>"</span></span><br><span class="line">title=<span class="string">"<span class="variable">$&#123;3:-Codex&#125;</span>"</span></span><br><span class="line"></span><br><span class="line">/usr/bin/osascript - <span class="string">"<span class="variable">$message</span>"</span> <span class="string">"<span class="variable">$subtitle</span>"</span> <span class="string">"<span class="variable">$title</span>"</span> &lt;&lt;<span class="string">'APPLESCRIPT'</span></span><br><span class="line">on run argv</span><br><span class="line">  <span class="built_in">set</span> msgText to item 1 of argv</span><br><span class="line">  <span class="built_in">set</span> subtitleText to item 2 of argv</span><br><span class="line">  <span class="built_in">set</span> titleText to item 3 of argv</span><br><span class="line">  display notification msgText with title titleText subtitle subtitleText sound name <span class="string">"Glass"</span></span><br><span class="line">end run</span><br><span class="line">APPLESCRIPT</span><br></pre></td></tr></table></figure>
+<p>保存路径：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">~/.codex/bin/codex_notify.sh</span><br></pre></td></tr></table></figure>
+<p>这样做的好处是：<strong>授权对象从“任意 AppleScript”收敛成了“一个固定用途的脚本”。</strong></p>
+<h2 id="第五层方案：为这个脚本加全局批准前缀"><a href="#第五层方案：为这个脚本加全局批准前缀" class="headerlink" title="第五层方案：为这个脚本加全局批准前缀"></a>第五层方案：为这个脚本加全局批准前缀</h2><p>有了专用脚本之后，再把它写进 Codex 的全局规则：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">~/.codex/rules/default.rules</span><br></pre></td></tr></table></figure>
+<p>增加一条：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">prefix_rule(pattern=[&quot;/Users/baoyiliu/.codex/bin/codex_notify.sh&quot;], decision=&quot;allow&quot;)</span><br></pre></td></tr></table></figure>
+<p>这条规则的含义是：</p>
+<ul>
+<li>后续会话如果要执行这个脚本</li>
+<li>即使它是提权执行</li>
+<li>也不需要再为“发送通知”这件事单独弹确认</li>
+</ul>
+<p>到这里，问题就被拆解干净了：</p>
+<ul>
+<li><code>~/.codex/AGENTS.md</code> 负责让新会话知道“什么时候该通知”</li>
+<li><code>~/.codex/bin/codex_notify.sh</code> 负责把能力收敛到一个固定动作</li>
+<li><code>~/.codex/rules/default.rules</code> 负责让这个固定动作默认获准</li>
+</ul>
+<h2 id="最终策略"><a href="#最终策略" class="headerlink" title="最终策略"></a>最终策略</h2><p>我最后采用的是下面这套组合：</p>
+<h3 id="1-对话内说明仍然保留"><a href="#1-对话内说明仍然保留" class="headerlink" title="1. 对话内说明仍然保留"></a>1. 对话内说明仍然保留</h3><p>通知只是补充，不替代正常的对话说明。这样即使系统通知被专注模式拦掉，终端里仍然有完整上下文。</p>
+<h3 id="2-只在两个关键节点发通知"><a href="#2-只在两个关键节点发通知" class="headerlink" title="2. 只在两个关键节点发通知"></a>2. 只在两个关键节点发通知</h3><ul>
+<li>任务完成</li>
+<li>需要我介入</li>
+</ul>
+<p>这能避免无意义的通知噪音。</p>
+<h3 id="3-默认走专用脚本"><a href="#3-默认走专用脚本" class="headerlink" title="3. 默认走专用脚本"></a>3. 默认走专用脚本</h3><p>统一调用：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">/Users/baoyiliu/.codex/bin/codex_notify.sh <span class="string">"消息内容"</span> <span class="string">"任务完成"</span></span><br></pre></td></tr></table></figure>
+<p>或者：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">/Users/baoyiliu/.codex/bin/codex_notify.sh <span class="string">"请确认是否允许执行某操作"</span> <span class="string">"需要你协助"</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-让规则全局生效，而不是只对当前会话生效"><a href="#4-让规则全局生效，而不是只对当前会话生效" class="headerlink" title="4. 让规则全局生效，而不是只对当前会话生效"></a>4. 让规则全局生效，而不是只对当前会话生效</h3><p>这样新开窗口、新会话时，不需要重新解释一遍“完成时提醒我”。</p>
+<h2 id="这套方案的边界"><a href="#这套方案的边界" class="headerlink" title="这套方案的边界"></a>这套方案的边界</h2><p>它已经足够实用，但也有边界：</p>
+<ul>
+<li>如果一个旧会话在规则写入前就已经启动，它不会自动刷新自己读过的指令</li>
+<li>如果 macOS 开了专注模式，通知可能不会以横幅形式出现</li>
+<li>如果未来 Codex 的权限模型变化，前缀规则可能需要调整</li>
+<li>这套方案解决的是“通知授权”和“跨会话约定”，不是任意命令的默认提权</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这件事里最关键的认知转变是：</p>
+<p><strong>不要追求“默认允许所有提权通知命令”，而是把能力收敛成一个专用脚本，再只对白名单脚本做默认授权。</strong></p>
+<p>这样既保住了体验，也控制住了权限边界。</p>
+<p>如果你也把 Agent 长时间跑在终端里，又不想一直盯着窗口，这套方案基本可以直接复用：</p>
+<ul>
+<li>用全局 <code>AGENTS.md</code> 约定什么时候提醒</li>
+<li>用专用脚本承载通知动作</li>
+<li>用批准前缀规则给这个动作做默认授权</li>
+</ul>
+<p>最后得到的效果就是：<strong>Agent 在该找你的时候，真的能像一条新消息一样把你叫回来。</strong></p>
+]]></content>
+      <categories>
+        <category>AI</category>
+        <category>Agent</category>
+      </categories>
+      <tags>
+        <tag>Codex</tag>
+        <tag>Agent</tag>
+        <tag>macOS</tag>
+        <tag>自动化</tag>
+        <tag>权限</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Rsyslog没有日志输出</title>
+    <url>/2016/03/30/Rsyslog%E6%B2%A1%E6%9C%89%E6%97%A5%E5%BF%97%E8%BE%93%E5%87%BA/</url>
+    <content><![CDATA[<p>最近在给私有云存储集群扩容，添加新机器的时候，发现相关日志没有打印出来，而业务功能上是正常的，怀疑是日志打印这块出了问题</p>
+<p>机器打印日志用的是rsyslog模块，检查对比了相关配置项后未发现问题，rsyslog进程也正常，未报错，比较奇怪的现象</p>
+<p>思索无果下，就只能一步一步看日志来尝试解决了</p>
+<a id="more"></a>
+<p>查看/var/log/messages，最后一条日志是</p>
+<pre><code>Mar 30 00:19:12 localhost rsyslogd: [origin software=&quot;rsyslogd&quot; swVersion=&quot;7.4.7&quot; x-pid=&quot;903&quot; x-info=&quot;http://www.rsyslog.com&quot;] exiting on signal 15.
+</code></pre><p>这里初现端倪，在凌晨的时候rsyslogd进程莫名退出了</p>
+<p>原因呢，不清楚，Google it，找到了些资料，</p>
+<p>参考</p>
+<p><a href="http://askubuntu.com/questions/249490/rsyslogd-stopped-writing-to-var-log-syslog-two-days-ago" target="_blank" rel="noopener">http://askubuntu.com/questions/249490/rsyslogd-stopped-writing-to-var-log-syslog-two-days-ago</a></p>
+<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=1116864" target="_blank" rel="noopener">https://bugzilla.redhat.com/show_bug.cgi?id=1116864</a></p>
+<p>看来还是配置项的问题</p>
+<p>rsyslog 3.21.1以上支持“配置验证模式”。在这种模式下，它解释和检查配置文件，但不启动。</p>
+<p>也就是说我们可以通过执行</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$/path/to/rsyslogd -f/path/to/config-file -N1</span><br></pre></td></tr></table></figure>
+<p>来检查我们的配置文件是否有误</p>
+<p>配置文件在/etc/rsyslog.d/下，根据资料我们执行</p>
+<pre><code>[root@swift-node1 rsyslog.d]# rsyslogd -f/etc/rsyslog.d/listen.conf -N1
+rsyslogd: version 7.4.7, config validation run (level 1), master config /etc/rsyslog.d/listen.conf
+rsyslogd: invalid or yet-unknown config file command &apos;SystemLogSocketName&apos; - have you forgotten to load a module? [try http://www.rsyslog.com/e/3003 ]
+rsyslogd: CONFIG ERROR: there are no active actions configured. Inputs will run, but no output whatsoever is created. [try http://www.rsyslog.com/e/2103 ]
+rsyslogd: run failed with error -2103 (see rsyslog.h or try http://www.rsyslog.com/e/2103 to learn what that number means)
+</code></pre><p>嗯，报错了</p>
+<p>看到这怀疑可能是/etc/rsyslog.d/listen.conf配置文件的问题了，</p>
+<p>删除(记得备份)</p>
+<pre><code>/etc/rsyslog.d/listen.conf
+</code></pre><p>然后重启rsyslog服务，再重启相关业务，发现相关日志已经有了，问题解决</p>
+]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>Rsyslog</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Git .gitignore失效，无法取消某文件/文件夹跟踪，或无法跟踪某文件/文件夹的问题解决</title>
+    <url>/2016/03/30/Git-gitignore%E5%A4%B1%E6%95%88%EF%BC%8C%E6%97%A0%E6%B3%95%E5%8F%96%E6%B6%88%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E8%B7%9F%E8%B8%AA%EF%BC%8C%E6%88%96%E6%97%A0%E6%B3%95%E8%B7%9F%E8%B8%AA%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E7%9A%84%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/</url>
+    <content><![CDATA[<h2 id="问题一"><a href="#问题一" class="headerlink" title="问题一"></a>问题一</h2><p>明明在.gitignore文件中设置了取消跟踪某文件，每次git status时却总能看到它，仿佛.gitignore对它不起作用一样</p>
+<p>原因分析：我们要知道的是，.gitignore只对未被track的文件有效，也就是说，一个文件如果已经被跟踪并加入缓存中后，后面如果想要取消该文件的跟踪的话，直接将其加入.gitignore文件中是不行的，我们需要先将其从本地缓存中删除它，然后再添加进.gitignore忽略</p>
+<p>具体执行命令</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$git</span> rm -r --cached dir</span><br></pre></td></tr></table></figure>
+<p>然后我们再git status查看，是不是发现已经看不到该文件了，问题一解决</p>
+<a id="more"></a>
+<h2 id="问题二"><a href="#问题二" class="headerlink" title="问题二"></a>问题二</h2><p>场景：A项目下有一个子项目B，两个项目都由Git管理</p>
+<p>其目录结构大概如下</p>
+<pre><code>A/
+----.git/
+----dir/
+----B/
+    ----.git/
+    ----dir/
+</code></pre><p>然后我们A项目git push提交Github托管，问题来了，我们登陆Github查看A项目时发现，A下面的B文件夹是空的</p>
+<p>为什么呢，原因其实很简单，因为B目录下有.git时，git会自动忽略该目录下的所有文件，导致我们push了一个空目录</p>
+<p>这样的话解决思路也很简单了，删除B目录下的.git(删除.git的操作是十分危险的，这里是为了举例说明，不要轻易模仿)，然后再重新添加</p>
+<p>完成后再push，我们发现B目录还是空的！并且我们检查.gitignore文件，发现B目录并没有被添加进去，好像.gitignore又失效了一样</p>
+<p>原因分析：git add 添加文件时，git扫描到B目录下的.git文件后，跟踪B目录，并忽略B目录下的子文件，也就是说，git把B这个空文件夹加进了缓存里，后面对B文件下的子文件的操作都会被忽略，删除B目录下的.git后，B目录下的子文件仍然处于被忽略状态</p>
+<p>解决办法和上面一样，我们删除B目录下的.git后，删除本地缓存</p>
+<p>执行</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$git</span> rm -r --cached dirB</span><br></pre></td></tr></table></figure>
+<p>然后再重新Add、commit、push，问题解决</p>
+]]></content>
+      <categories>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一致性哈希算法在Swift中的应用</title>
+    <url>/2017/01/16/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E7%AE%97%E6%B3%95%E5%9C%A8Swift%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8/</url>
+    <content><![CDATA[<blockquote>
+<p>Created by <a href="mailto:byliu@iflytek.com" target="_blank" rel="noopener">byliu@iflytek.com</a></p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在分布式对象存储中，一个关键问题是数据该如何存放。Swift是基于<strong>一致性哈希</strong>技术，通过计算可将对象均匀分布到虚拟空间的虚拟节点上，在增加或删除节点时可大大减少需移动的数据量。本文主要介绍一致性哈希在云存储Swift中具体应用。</p>
+<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><h3 id="普通哈希算法与场景分析"><a href="#普通哈希算法与场景分析" class="headerlink" title="普通哈希算法与场景分析"></a>普通哈希算法与场景分析</h3><p>先来看一个简单的例子，假设我们手里有N台存储服务器（以下简称node），打算用于图片文件存储，为了使服务器的负载均衡，需要把对象均匀地映射到每台服务器上，通常会使用哈希算法来实现，计算步骤如下：</p>
+<ol>
+<li>计算object的hash值Key</li>
+<li>计算Key mod N值</li>
+</ol>
+<a id="more"></a>
+<p>有N个存储节点，将Key模N得到的余数就是该Key对应的值需要存放的节点。比如，N是2，那么值为0、1、2、3、4的Key需要分别存放在0、1、0、1和0号节点上。如果哈希算法是均匀的，数据就会被平均分配到两个节点中。如果每个数据的访问量比较平均，负载也会被平均分配到两个节点上。</p>
+<p>但是，当数据量和访问量进一步增加，两个节点无法满足需求的时候，需要增加一个节点来服务客户端的请求。这时，N变成了3，映射关系变成了Key mod (N+1)，因此，上述哈希值为2、3、4的数据需要重新分配（2-&gt;server 2，3 -&gt; server 0，4 -&gt; server 1）。如果数据量很大的话，那么数据量的迁移工作将会非常大。当N已经很大，从N加入一个节点变成N+1个节点的过程，会导致整个哈希环的重新分配，这个过程几乎是无法容忍的，几乎全部的数据都要重新移动一遍。</p>
+<p>举例说明，假设有100个node的集群，将10^7项数据使用md5 hash算法分配到每个node中,现在假设增加一个节点提供负载能力，不过得重新分配数据项到新的节点上。</p>
+<p>通过简单的计算我们可以发现，为了提高集群1%的存储能力，我们需要移动9900989个数据项，也就是99.01%的数据项！显然，这种算法严重地影响了系统的性能和可扩展性。</p>
+<p><img src="http://byliu.bj.openstorage.cn/byliu/普通HASH移动数据.gif" alt="增加1%的存储能力=移动99%的数据" title="增加1%的存储能力=移动99%的数据"></p>
+<p>一致性哈希算法就是为了解决这个问题而来。</p>
+<h3 id="一致性哈希算法"><a href="#一致性哈希算法" class="headerlink" title="一致性哈希算法"></a>一致性哈希算法</h3><p>一致性哈希算法是由D. Darger、E. Lehman和T. Leighton 等人于1997年在论文 <a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="noopener">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a> 首次提出，目的主要是为了解决分布式网络中的热点问题。在其论文中，提出了一致性哈希算法并给出了衡量一个哈希算法的4个指标：</p>
+<ul>
+<li>平衡性(Balance)<ul>
+<li>平衡性是指Hash的结果能够尽可能分布均匀，充分利用所有缓存空间。</li>
+</ul>
+</li>
+<li>单调性(Monotonicity)<ul>
+<li>单调性是指如果已经有一些内容通过哈希分派到了相应的缓冲中，又有新的缓冲加入到系统中。哈希的结果应能够保证原有已分配的内容可以被映射到新的缓冲中去，而不会被映射到旧的缓冲集合中的其他缓冲区。</li>
+</ul>
+</li>
+<li>分散性(Spread)<ul>
+<li>分散性定义了分布式环境中，不同终端通过Hash过程将内容映射至缓存上时，因可见缓存不同，Hash结果不一致，相同的内容被映射至不同的缓冲区。</li>
+</ul>
+</li>
+<li>负载(Load)<ul>
+<li>负载是对分散性要求的另一个纬度。既然不同的终端可以将相同的内容映射到不同的缓冲区中，那么对于一个特定的缓冲区而言，也可能被不同的用户映射为不同的内容。</li>
+</ul>
+</li>
+</ul>
+<p>Swift使用该算法的主要目的是在改变集群的node数量时（增加/删除服务器），能够尽可能少地改变已存在key和node的映射关系，以满足单调性。一致性哈希一般两种思路：</p>
+<ol>
+<li>迁移为主要特点(swift初期采用)</li>
+<li>引入虚结点，减少移动为特点(swift现采用)</li>
+</ol>
+<p>具体步骤如下：</p>
+<ol>
+<li>首先求出每个节点(机器名或者是IP地址)的哈希值，并将其分配到一个圆环区间上（这里取0-2^32)。</li>
+<li>求出需要存储对象的哈希值，也将其分配到这个圆环上。</li>
+<li>从对象映射到的位置开始顺时针查找，将对象保存到找到的第一个节点上。</li>
+</ol>
+<p>其中这个从哈希到位置映射的圆环，叫做哈希环(Ring)。哈希环空间上的分布如下图所示：</p>
+<p><img src="http://byliu.bj.openstorage.cn/byliu/哈希环空间.png" alt="哈希环空间" title="哈希环空间"></p>
+<p>假设在这个环形哈希空间中，新增一个node5，node5被映射在node2和node4之间，那么受影响的将仅是沿node5逆时针遍历直到下一个node（node2）之间的对象（它们本来映射到node4上）。如下图所示：</p>
+<p><img src="http://byliu.bj.openstorage.cn/byliu/一致性哈希算法的数据移动.png" alt="一致性哈希算法的数据移动" title="一致性哈希算法的数据移动"></p>
+<p>通过前面的分析可以知道，一致性哈希算法对于节点的增加(或减少)都只需重定位环空间中的一小部分数据，具有较好的容错性和可扩展性。</p>
+<p>但是上边描述的一致性Hash算法还有两个潜在的问题:</p>
+<ol>
+<li>将节点hash后会不均匀地分布在环上，这样大量key在寻找节点时，会存在key命中各个节点的概率差别较大，无法实现有效的负载均衡。</li>
+<li>如有三个节点Node1,Node2,Node3，分布在环上时三个节点挨的很近，落在环上的key寻找节点时，大量key顺时针总是分配给Node2，而其它两个节点被找到的概率都会很小。</li>
+</ol>
+<p>为了解决这个问题，我们引入<strong>虚拟节点(Partition)</strong>的概念</p>
+<h3 id="虚拟节点-Partition"><a href="#虚拟节点-Partition" class="headerlink" title="虚拟节点(Partition)"></a>虚拟节点(Partition)</h3><p>前面也说道，一致性哈希算法在服务节点太少时，容易因为节点分部不均匀而造成数据倾斜问题。例如系统中只有两台服务器，其环分布如下：</p>
+<p><img src="http://byliu.bj.openstorage.cn/byliu/两节点不平衡环.png" alt="两节点不平衡环" title="两节点不平衡环"></p>
+<p>此时必然造成大量数据集中到Node A上，而只有极少量会定位到Node B上。</p>
+<p>考虑到哈希算法在node较少的情况下，改变node数会带来巨大的数据迁移。为此一致性哈希引入了“虚拟节点”的概念： “虚拟节点”是实际节点在环形空间的复制品，一个实际节点对应了若干个“虚拟节点”，“虚拟节点”在哈希空间中以哈希值排列。如下图：</p>
+<p><img src="http://byliu.bj.openstorage.cn/byliu/虚拟节点.jpg" alt="虚拟节点" title="虚拟节点"></p>
+<p>引入了“虚拟节点”后，映射关系就从[object—&gt;node]转换成了[object—&gt;virtual node—&gt; node]。查询object所在node的映射关系如下图所示。</p>
+<p><img src="http://byliu.bj.openstorage.cn/byliu/对象、虚结点、节点间的映射关系.jpg" alt="对象、虚结点、节点间的映射关系" title="对象、虚结点、节点间的映射关系"></p>
+<p>这样就解决了服务节点少时数据倾斜的问题。在实际应用中，通常将虚拟节点数设置为32甚至更大，因此即使很少的服务节点也能做到相对均匀的数据分布。</p>
+<h3 id="权重-weight"><a href="#权重-weight" class="headerlink" title="权重(weight)"></a>权重(weight)</h3><p>基于虚拟节点(partition)，引入weight的概念，目的是“能者多劳”：解决未来添加存储能力更大的node时，使得可以分配到更多的虚拟节点(partition)。例如，2T 容量的node的虚拟节点(partition)数为1T的两倍。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上就是一致性哈希算法在云存储swift中的应用了，swift中的核心组件——Ring的实现就是基于此，当然Ring在实现上还有更多细节上优化的地方，这里略过不讲。</p>
+<p>一致性哈希算法除了在云存储swift中解决存储数据节点均衡问题外，在很多场景下也得到了应用，比如分布式cache系统(参考资料1)、服务器均衡(参考资料3)等。</p>
+<p>本文只是简要介绍了这个算法，更深入的内容可以参看论文<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="noopener">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a>，同时提供一个<a href="http://www.codeproject.com/Articles/56138/Consistent-hashing" target="_blank" rel="noopener">C语言版本的实现</a>供参考。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><p>核心论文：<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="noopener">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a></p>
+</li>
+<li><p><a href="http://blog.csdn.net/kongqz/article/details/6695417" target="_blank" rel="noopener">memcache的一致性hash算法使用</a></p>
+</li>
+<li><p><a href="http://www.cnblogs.com/haippy/archive/2011/12/10/2282943.html" target="_blank" rel="noopener">一致性Hash算法背景</a></p>
+</li>
+<li><p><a href="http://blog.csdn.net/caigen1988/article/details/7708806" target="_blank" rel="noopener">一致性哈希算法（用于解决服务器均衡问题）</a></p>
+</li>
+<li><p><a href="http://blog.csdn.net/cywosp/article/details/23397179/" target="_blank" rel="noopener">每天进步一点点——五分钟理解一致性哈希算法(consistent hashing)</a></p>
+</li>
+<li><p><a href="http://www.cnblogs.com/yuxc/archive/2012/06/22/2558312.html" target="_blank" rel="noopener">深入云存储系统Swift核心组件：Ring实现原理剖析</a></p>
+</li>
+<li><p><a href="http://www.openstack.cn/?p=303" target="_blank" rel="noopener">一致性哈希算法及其在分布式系统中的应用</a></p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>OpenStack</category>
+        <category>Swift</category>
+      </categories>
+      <tags>
+        <tag>OpenStack Swift</tag>
+        <tag>一致性哈希</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>swift日志模块加载出错 socket.error: [Errno 111] Connection refused</title>
+    <url>/2016/04/04/swift%E6%97%A5%E5%BF%97%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E5%87%BA%E9%94%99-socket-error-Errno-111-Connection-refused/</url>
+    <content><![CDATA[<p>最近在龟速整理笔记中</p>
+<p>发现这条笔记感觉还挺有用的，贴出来分享下</p>
+<h2 id="报错"><a href="#报错" class="headerlink" title="报错"></a>报错</h2><p>配置swift完成后，启动swift相关服务时报错</p>
+<pre><code>socket.error: [Errno 111] Connection refused
+</code></pre><a id="more"></a>
+<p>详细错误提示</p>
+<pre><code>root@ubuntu:/etc/swift# swift-init account restart -n    
+Signal account-server  pid: 22679  signal: 15
+No account-server running
+Starting account-server...(/etc/swift/account-server/1.conf)
+Traceback (most recent call last):
+  File &quot;/usr/local/bin/swift-account-server&quot;, line 23, in &lt;module&gt;
+    sys.exit(run_wsgi(conf_file, &apos;account-server&apos;, **options))
+  File &quot;/usr/local/lib/python2.7/dist-packages/swift/common/wsgi.py&quot;, line 455, in run_wsgi
+    _initrp(conf_path, app_section, *args, **kwargs)
+  File &quot;/usr/local/lib/python2.7/dist-packages/swift/common/wsgi.py&quot;, line 565, in _initrp
+    log_route=&apos;wsgi&apos;)
+  File &quot;/usr/local/lib/python2.7/dist-packages/swift/common/utils.py&quot;, line 1481, in get_logger
+    raise e
+socket.error: [Errno 111] Connection refused
+</code></pre><p>参考资料</p>
+<p><a href="http://www.rsyslog.com/doc/v8-stable/configuration/modules/imuxsock.html" target="_blank" rel="noopener">http://www.rsyslog.com/doc/v8-stable/configuration/modules/imuxsock.html</a></p>
+<h2 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h2><ul>
+<li>rsyslog 没有对/dev/log监听导致</li>
+</ul>
+<h2 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="variable">$vim</span> /etc/rsyslog.conf</span><br></pre></td></tr></table></figure>
+<p>添加</p>
+<pre><code>$AddUnixListenSocket /dev/log
+</code></pre><p>然后再重启相关服务，正常</p>
+<p>问题解决</p>
+]]></content>
+      <categories>
+        <category>OpenStack</category>
+        <category>Swift</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>Rsyslog</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>python dict几种遍历方式性能简单比较</title>
+    <url>/2016/04/04/python-dict%E5%87%A0%E7%A7%8D%E9%81%8D%E5%8E%86%E6%96%B9%E5%BC%8F%E6%80%A7%E8%83%BD%E7%AE%80%E5%8D%95%E6%AF%94%E8%BE%83/</url>
+    <content><![CDATA[<p>Python中对dict的遍历有很多种方法，本文中对几种方法性能进行比较简单的对比，给大家一个参考</p>
+<h2 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h2><pre><code>Windows10 + Python2.7.8
+</code></pre><h2 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h2><p>首先看我们的测试代码</p>
+<a id="more"></a>
+<p>dict_test.py</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line">l = [(x,x) <span class="keyword">for</span> x <span class="keyword">in</span> xrange(<span class="number">10000000</span>)]</span><br><span class="line">d = dict(l)  </span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> clock  </span><br><span class="line"></span><br><span class="line">time_list = []</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d</span></span><br><span class="line"><span class="comment">#该方法内部实现还不清楚，效率很高，感觉和dict.iterkeys()类似，待考证</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d:</span><br><span class="line">    t = i + d[i]</span><br><span class="line">    <span class="comment">#print "%d, %d" % (i, d[i])</span></span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.keys()</span></span><br><span class="line"><span class="comment">#调用内置方法dict.keys()，该方法将字典中的键以列表的形式返回</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.keys():</span><br><span class="line">   t = i + d[i]</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.iterkeys()</span></span><br><span class="line"><span class="comment">#调用内置方法dict.iterkeys()，该方法返回针对键的迭代器</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.iterkeys():</span><br><span class="line">    t = i + d[i]</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.items()</span></span><br><span class="line"><span class="comment">#dict.items()，items方法将所有字典项以列表方式返回，这些列表项中的每一项都来自于（键、值），但是在项返回时并没有特殊顺序</span></span><br><span class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.items():</span><br><span class="line">    t = k + v</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.iteritems()</span></span><br><span class="line"><span class="comment">#dict.iteritems()，iteritems作用大致一样，但是会返回一个迭代器对象而不是列表</span></span><br><span class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.iteritems():</span><br><span class="line">    t = k + v</span><br><span class="line">time_list.append(clock())</span><br><span class="line"><span class="comment">#补充 items()返回的是一个列表，所以当dict很大时会消耗大量内存。在python3中，items()进行了优化，也只返回迭代器，所以取消iteritems方法</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#print zip(d.iterkeys(),d.itervalues())</span></span><br><span class="line"><span class="comment">#zip函数接受任意多个（包括0个和1个）序列作为参数，返回一个tuple列表</span></span><br><span class="line"><span class="comment">#关于zip函数的详细说明可以参考 http://www.cnblogs.com/frydsh/archive/2012/07/10/2585370.html</span></span><br><span class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> zip(d.iterkeys(),d.itervalues()):</span><br><span class="line">    t = k + v</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#打印各个方法所花时间</span></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line"><span class="keyword">while</span> i &lt; time_list.__len__() - <span class="number">1</span>:</span><br><span class="line">    <span class="keyword">print</span> <span class="string">"%d: %s"</span> % (i, time_list[i + <span class="number">1</span>] - time_list[i])</span><br><span class="line">    i = i + <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<h2 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h2><p>运行四次</p>
+<pre><code>第一次
+0: 2.55650656968
+1: 2.81541793721
+2: 2.60263192552
+3: 13.3213878899
+4: 2.88246335262
+5: 4.9362081227
+
+第二次
+0: 2.59641417876
+1: 2.66579489621
+2: 2.57118659521
+3: 14.0514050106
+4: 3.30343528077
+5: 5.3133750038
+
+第三次
+0: 2.54319498334
+1: 2.71084397889
+2: 2.50744050815
+3: 13.2553875455
+4: 2.92418555176
+5: 4.9001545927
+
+第四次
+0: 2.61268754242
+1: 2.72744719433
+2: 2.73589164328
+3: 13.613833514
+4: 3.02585041181
+5: 5.39626910881
+</code></pre><h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>一般情况下耗时排序(从大到小)</p>
+<pre><code>for k,v in dict.items()
+&gt;&gt;
+for k,v in zip(d.iterkeys(),d.itervalues())
+&gt;
+for k,v in d.iteritems()
+&gt;
+for i in d.keys()
+&gt;
+for i in d.iterkeys()
+=
+for i in d
+</code></pre><p>可以知道，dict.items()方法的耗时要远远大于其他方法，特别是在数据量大的时候，要慎用</p>
+<p>其他几种方法的差别都不是很大，可以根据实际情况选择；其中dict.iteritems()效率较高，代码上也比较直观，推荐使用</p>
+<p>理解这几种遍历方式的差异的关键就在于理解dict.items()与dict.iteritems()的区别，dict.keys()和dict.iterkeys()也是类似</p>
+<p><strong>items()返回的是一个列表，所以当dict很大时会消耗大量内存，iteritems作用大致一样，但是会返回一个迭代器对象而不是列表</strong>。在python3中，items()进行了优化，也只返回迭代器，所以取消iteritems方法</p>
+]]></content>
+      <categories>
+        <category>Python</category>
+        <category>Dict</category>
+      </categories>
+      <tags>
+        <tag>性能</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>对象存储与负载均衡</title>
+    <url>/2018/03/12/%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>介绍常用的负载均衡手段</p>
 <h2 id="初步方案与问题"><a href="#初步方案与问题" class="headerlink" title="初步方案与问题"></a>初步方案与问题</h2><p>haproxy + keepalived 实现负载均衡和高可用</p>
 <p>问题：</p>
 <p>haproxy 节点容易成为瓶颈</p>
@@ -93,355 +477,12 @@
 <li>跟VS/TUN相比，这种方法没有IP隧道的开销，但是要求负载调度器与实际服务器都有一块网卡连在同一物理网段上，服务器网络设备（或者设备别名）不作ARP响应，或者能将报文重定向（Redirect）到本地的Socket端口上</li>
 </ul>
 ]]></content>
-      
-        <categories>
-            
-            <category> Linux </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Linux </tag>
-            
-            <tag> 负载均衡 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[一致性哈希算法在Swift中的应用]]></title>
-      <url>http://byliu.github.io/2017/01/16/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E7%AE%97%E6%B3%95%E5%9C%A8Swift%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8/</url>
-      <content type="html"><![CDATA[<blockquote>
-<p>Created by byliu@iflytek.com</p>
-</blockquote>
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在分布式对象存储中，一个关键问题是数据该如何存放。Swift是基于<strong>一致性哈希</strong>技术，通过计算可将对象均匀分布到虚拟空间的虚拟节点上，在增加或删除节点时可大大减少需移动的数据量。本文主要介绍一致性哈希在云存储Swift中具体应用。</p>
-<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><h3 id="普通哈希算法与场景分析"><a href="#普通哈希算法与场景分析" class="headerlink" title="普通哈希算法与场景分析"></a>普通哈希算法与场景分析</h3><p>先来看一个简单的例子，假设我们手里有N台存储服务器（以下简称node），打算用于图片文件存储，为了使服务器的负载均衡，需要把对象均匀地映射到每台服务器上，通常会使用哈希算法来实现，计算步骤如下：</p>
-<ol>
-<li>计算object的hash值Key</li>
-<li>计算Key mod N值</li>
-</ol>
-<a id="more"></a>
-<p>有N个存储节点，将Key模N得到的余数就是该Key对应的值需要存放的节点。比如，N是2，那么值为0、1、2、3、4的Key需要分别存放在0、1、0、1和0号节点上。如果哈希算法是均匀的，数据就会被平均分配到两个节点中。如果每个数据的访问量比较平均，负载也会被平均分配到两个节点上。</p>
-<p>但是，当数据量和访问量进一步增加，两个节点无法满足需求的时候，需要增加一个节点来服务客户端的请求。这时，N变成了3，映射关系变成了Key mod (N+1)，因此，上述哈希值为2、3、4的数据需要重新分配（2-&gt;server 2，3 -&gt; server 0，4 -&gt; server 1）。如果数据量很大的话，那么数据量的迁移工作将会非常大。当N已经很大，从N加入一个节点变成N+1个节点的过程，会导致整个哈希环的重新分配，这个过程几乎是无法容忍的，几乎全部的数据都要重新移动一遍。</p>
-<p>举例说明，假设有100个node的集群，将10^7项数据使用md5 hash算法分配到每个node中,现在假设增加一个节点提供负载能力，不过得重新分配数据项到新的节点上。</p>
-<p>通过简单的计算我们可以发现，为了提高集群1%的存储能力，我们需要移动9900989个数据项，也就是99.01%的数据项！显然，这种算法严重地影响了系统的性能和可扩展性。</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/普通HASH移动数据.gif" alt="增加1%的存储能力=移动99%的数据" title="增加1%的存储能力=移动99%的数据"></p>
-<p>一致性哈希算法就是为了解决这个问题而来。</p>
-<h3 id="一致性哈希算法"><a href="#一致性哈希算法" class="headerlink" title="一致性哈希算法"></a>一致性哈希算法</h3><p>一致性哈希算法是由D. Darger、E. Lehman和T. Leighton 等人于1997年在论文 <a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="external">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a> 首次提出，目的主要是为了解决分布式网络中的热点问题。在其论文中，提出了一致性哈希算法并给出了衡量一个哈希算法的4个指标：</p>
-<ul>
-<li>平衡性(Balance)<ul>
-<li>平衡性是指Hash的结果能够尽可能分布均匀，充分利用所有缓存空间。</li>
-</ul>
-</li>
-<li>单调性(Monotonicity)<ul>
-<li>单调性是指如果已经有一些内容通过哈希分派到了相应的缓冲中，又有新的缓冲加入到系统中。哈希的结果应能够保证原有已分配的内容可以被映射到新的缓冲中去，而不会被映射到旧的缓冲集合中的其他缓冲区。</li>
-</ul>
-</li>
-<li>分散性(Spread)<ul>
-<li>分散性定义了分布式环境中，不同终端通过Hash过程将内容映射至缓存上时，因可见缓存不同，Hash结果不一致，相同的内容被映射至不同的缓冲区。</li>
-</ul>
-</li>
-<li>负载(Load)<ul>
-<li>负载是对分散性要求的另一个纬度。既然不同的终端可以将相同的内容映射到不同的缓冲区中，那么对于一个特定的缓冲区而言，也可能被不同的用户映射为不同的内容。</li>
-</ul>
-</li>
-</ul>
-<p>Swift使用该算法的主要目的是在改变集群的node数量时（增加/删除服务器），能够尽可能少地改变已存在key和node的映射关系，以满足单调性。一致性哈希一般两种思路：</p>
-<ol>
-<li>迁移为主要特点(swift初期采用)</li>
-<li>引入虚结点，减少移动为特点(swift现采用)</li>
-</ol>
-<p>具体步骤如下：</p>
-<ol>
-<li>首先求出每个节点(机器名或者是IP地址)的哈希值，并将其分配到一个圆环区间上（这里取0-2^32)。</li>
-<li>求出需要存储对象的哈希值，也将其分配到这个圆环上。</li>
-<li>从对象映射到的位置开始顺时针查找，将对象保存到找到的第一个节点上。</li>
-</ol>
-<p>其中这个从哈希到位置映射的圆环，叫做哈希环(Ring)。哈希环空间上的分布如下图所示：</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/哈希环空间.png" alt="哈希环空间" title="哈希环空间"></p>
-<p>假设在这个环形哈希空间中，新增一个node5，node5被映射在node2和node4之间，那么受影响的将仅是沿node5逆时针遍历直到下一个node（node2）之间的对象（它们本来映射到node4上）。如下图所示：</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/一致性哈希算法的数据移动.png" alt="一致性哈希算法的数据移动" title="一致性哈希算法的数据移动"></p>
-<p>通过前面的分析可以知道，一致性哈希算法对于节点的增加(或减少)都只需重定位环空间中的一小部分数据，具有较好的容错性和可扩展性。</p>
-<p>但是上边描述的一致性Hash算法还有两个潜在的问题:</p>
-<ol>
-<li>将节点hash后会不均匀地分布在环上，这样大量key在寻找节点时，会存在key命中各个节点的概率差别较大，无法实现有效的负载均衡。</li>
-<li>如有三个节点Node1,Node2,Node3，分布在环上时三个节点挨的很近，落在环上的key寻找节点时，大量key顺时针总是分配给Node2，而其它两个节点被找到的概率都会很小。</li>
-</ol>
-<p>为了解决这个问题，我们引入<strong>虚拟节点(Partition)</strong>的概念</p>
-<h3 id="虚拟节点-Partition"><a href="#虚拟节点-Partition" class="headerlink" title="虚拟节点(Partition)"></a>虚拟节点(Partition)</h3><p>前面也说道，一致性哈希算法在服务节点太少时，容易因为节点分部不均匀而造成数据倾斜问题。例如系统中只有两台服务器，其环分布如下：</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/两节点不平衡环.png" alt="两节点不平衡环" title="两节点不平衡环"></p>
-<p>此时必然造成大量数据集中到Node A上，而只有极少量会定位到Node B上。</p>
-<p>考虑到哈希算法在node较少的情况下，改变node数会带来巨大的数据迁移。为此一致性哈希引入了“虚拟节点”的概念： “虚拟节点”是实际节点在环形空间的复制品，一个实际节点对应了若干个“虚拟节点”，“虚拟节点”在哈希空间中以哈希值排列。如下图：</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/虚拟节点.jpg" alt="虚拟节点" title="虚拟节点"></p>
-<p>引入了“虚拟节点”后，映射关系就从[object—&gt;node]转换成了[object—&gt;virtual node—&gt; node]。查询object所在node的映射关系如下图所示。</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/对象、虚结点、节点间的映射关系.jpg" alt="对象、虚结点、节点间的映射关系" title="对象、虚结点、节点间的映射关系"></p>
-<p>这样就解决了服务节点少时数据倾斜的问题。在实际应用中，通常将虚拟节点数设置为32甚至更大，因此即使很少的服务节点也能做到相对均匀的数据分布。</p>
-<h3 id="权重-weight"><a href="#权重-weight" class="headerlink" title="权重(weight)"></a>权重(weight)</h3><p>基于虚拟节点(partition)，引入weight的概念，目的是“能者多劳”：解决未来添加存储能力更大的node时，使得可以分配到更多的虚拟节点(partition)。例如，2T 容量的node的虚拟节点(partition)数为1T的两倍。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上就是一致性哈希算法在云存储swift中的应用了，swift中的核心组件——Ring的实现就是基于此，当然Ring在实现上还有更多细节上优化的地方，这里略过不讲。</p>
-<p>一致性哈希算法除了在云存储swift中解决存储数据节点均衡问题外，在很多场景下也得到了应用，比如分布式cache系统(参考资料1)、服务器均衡(参考资料3)等。</p>
-<p>本文只是简要介绍了这个算法，更深入的内容可以参看论文<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="external">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a>，同时提供一个<a href="http://www.codeproject.com/Articles/56138/Consistent-hashing" target="_blank" rel="external">C语言版本的实现</a>供参考。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
-<li><p>核心论文：<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="external">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a></p>
-</li>
-<li><p><a href="http://blog.csdn.net/kongqz/article/details/6695417" target="_blank" rel="external">memcache的一致性hash算法使用</a></p>
-</li>
-<li><p><a href="http://www.cnblogs.com/haippy/archive/2011/12/10/2282943.html" target="_blank" rel="external">一致性Hash算法背景</a></p>
-</li>
-<li><p><a href="http://blog.csdn.net/caigen1988/article/details/7708806" target="_blank" rel="external">一致性哈希算法（用于解决服务器均衡问题）</a></p>
-</li>
-<li><p><a href="http://blog.csdn.net/cywosp/article/details/23397179/" target="_blank" rel="external">每天进步一点点——五分钟理解一致性哈希算法(consistent hashing)</a></p>
-</li>
-<li><p><a href="http://www.cnblogs.com/yuxc/archive/2012/06/22/2558312.html" target="_blank" rel="external">深入云存储系统Swift核心组件：Ring实现原理剖析</a></p>
-</li>
-<li><p><a href="http://www.openstack.cn/?p=303" target="_blank" rel="external">一致性哈希算法及其在分布式系统中的应用</a></p>
-</li>
-</ol>
-]]></content>
-      
-        <categories>
-            
-            <category> OpenStack </category>
-            
-            <category> Swift </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> OpenStack Swift </tag>
-            
-            <tag> 一致性哈希 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[python dict几种遍历方式性能简单比较]]></title>
-      <url>http://byliu.github.io/2016/04/04/python-dict%E5%87%A0%E7%A7%8D%E9%81%8D%E5%8E%86%E6%96%B9%E5%BC%8F%E6%80%A7%E8%83%BD%E7%AE%80%E5%8D%95%E6%AF%94%E8%BE%83/</url>
-      <content type="html"><![CDATA[<p>Python中对dict的遍历有很多种方法，本文中对几种方法性能进行比较简单的对比，给大家一个参考</p>
-<h2 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h2><pre><code>Windows10 + Python2.7.8
-</code></pre><h2 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h2><p>首先看我们的测试代码</p>
-<a id="more"></a>
-<p>dict_test.py</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># -*- coding: utf-8 -*-</span></div><div class="line"></div><div class="line">l = [(x,x) <span class="keyword">for</span> x <span class="keyword">in</span> xrange(<span class="number">10000000</span>)]</div><div class="line">d = dict(l)  </div><div class="line"></div><div class="line"><span class="keyword">from</span> time <span class="keyword">import</span> clock  </div><div class="line"></div><div class="line">time_list = []</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d</span></div><div class="line"><span class="comment">#该方法内部实现还不清楚，效率很高，感觉和dict.iterkeys()类似，待考证</span></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d:</div><div class="line">    t = i + d[i]</div><div class="line">    <span class="comment">#print "%d, %d" % (i, d[i])</span></div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.keys()</span></div><div class="line"><span class="comment">#调用内置方法dict.keys()，该方法将字典中的键以列表的形式返回</span></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.keys():</div><div class="line">   t = i + d[i]</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.iterkeys()</span></div><div class="line"><span class="comment">#调用内置方法dict.iterkeys()，该方法返回针对键的迭代器</span></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.iterkeys():</div><div class="line">    t = i + d[i]</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.items()</span></div><div class="line"><span class="comment">#dict.items()，items方法将所有字典项以列表方式返回，这些列表项中的每一项都来自于（键、值），但是在项返回时并没有特殊顺序</span></div><div class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.items():</div><div class="line">    t = k + v</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.iteritems()</span></div><div class="line"><span class="comment">#dict.iteritems()，iteritems作用大致一样，但是会返回一个迭代器对象而不是列表</span></div><div class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.iteritems():</div><div class="line">    t = k + v</div><div class="line">time_list.append(clock())</div><div class="line"><span class="comment">#补充 items()返回的是一个列表，所以当dict很大时会消耗大量内存。在python3中，items()进行了优化，也只返回迭代器，所以取消iteritems方法</span></div><div class="line"></div><div class="line"><span class="comment">#print zip(d.iterkeys(),d.itervalues())</span></div><div class="line"><span class="comment">#zip函数接受任意多个（包括0个和1个）序列作为参数，返回一个tuple列表</span></div><div class="line"><span class="comment">#关于zip函数的详细说明可以参考 http://www.cnblogs.com/frydsh/archive/2012/07/10/2585370.html</span></div><div class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> zip(d.iterkeys(),d.itervalues()):</div><div class="line">    t = k + v</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#打印各个方法所花时间</span></div><div class="line">i = <span class="number">0</span></div><div class="line"><span class="keyword">while</span> i &lt; time_list.__len__() - <span class="number">1</span>:</div><div class="line">    <span class="keyword">print</span> <span class="string">"%d: %s"</span> % (i, time_list[i + <span class="number">1</span>] - time_list[i])</div><div class="line">    i = i + <span class="number">1</span></div></pre></td></tr></table></figure>
-<h2 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h2><p>运行四次</p>
-<pre><code>第一次
-0: 2.55650656968
-1: 2.81541793721
-2: 2.60263192552
-3: 13.3213878899
-4: 2.88246335262
-5: 4.9362081227
-
-第二次
-0: 2.59641417876
-1: 2.66579489621
-2: 2.57118659521
-3: 14.0514050106
-4: 3.30343528077
-5: 5.3133750038
-
-第三次
-0: 2.54319498334
-1: 2.71084397889
-2: 2.50744050815
-3: 13.2553875455
-4: 2.92418555176
-5: 4.9001545927
-
-第四次
-0: 2.61268754242
-1: 2.72744719433
-2: 2.73589164328
-3: 13.613833514
-4: 3.02585041181
-5: 5.39626910881
-</code></pre><h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>一般情况下耗时排序(从大到小)</p>
-<pre><code>for k,v in dict.items()
-&gt;&gt;
-for k,v in zip(d.iterkeys(),d.itervalues())
-&gt;
-for k,v in d.iteritems()
-&gt;
-for i in d.keys()
-&gt;
-for i in d.iterkeys()
-=
-for i in d
-</code></pre><p>可以知道，dict.items()方法的耗时要远远大于其他方法，特别是在数据量大的时候，要慎用</p>
-<p>其他几种方法的差别都不是很大，可以根据实际情况选择；其中dict.iteritems()效率较高，代码上也比较直观，推荐使用</p>
-<p>理解这几种遍历方式的差异的关键就在于理解dict.items()与dict.iteritems()的区别，dict.keys()和dict.iterkeys()也是类似</p>
-<p><strong>items()返回的是一个列表，所以当dict很大时会消耗大量内存，iteritems作用大致一样，但是会返回一个迭代器对象而不是列表</strong>。在python3中，items()进行了优化，也只返回迭代器，所以取消iteritems方法</p>
-]]></content>
-      
-        <categories>
-            
-            <category> Python </category>
-            
-            <category> Dict </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 性能 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[swift日志模块加载出错 socket.error: [Errno 111] Connection refused]]></title>
-      <url>http://byliu.github.io/2016/04/04/swift%E6%97%A5%E5%BF%97%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E5%87%BA%E9%94%99-socket-error-Errno-111-Connection-refused/</url>
-      <content type="html"><![CDATA[<p>最近在龟速整理笔记中</p>
-<p>发现这条笔记感觉还挺有用的，贴出来分享下</p>
-<h2 id="报错"><a href="#报错" class="headerlink" title="报错"></a>报错</h2><p>配置swift完成后，启动swift相关服务时报错</p>
-<pre><code>socket.error: [Errno 111] Connection refused
-</code></pre><a id="more"></a>
-<p>详细错误提示</p>
-<pre><code>root@ubuntu:/etc/swift# swift-init account restart -n    
-Signal account-server  pid: 22679  signal: 15
-No account-server running
-Starting account-server...(/etc/swift/account-server/1.conf)
-Traceback (most recent call last):
-  File &quot;/usr/local/bin/swift-account-server&quot;, line 23, in &lt;module&gt;
-    sys.exit(run_wsgi(conf_file, &apos;account-server&apos;, **options))
-  File &quot;/usr/local/lib/python2.7/dist-packages/swift/common/wsgi.py&quot;, line 455, in run_wsgi
-    _initrp(conf_path, app_section, *args, **kwargs)
-  File &quot;/usr/local/lib/python2.7/dist-packages/swift/common/wsgi.py&quot;, line 565, in _initrp
-    log_route=&apos;wsgi&apos;)
-  File &quot;/usr/local/lib/python2.7/dist-packages/swift/common/utils.py&quot;, line 1481, in get_logger
-    raise e
-socket.error: [Errno 111] Connection refused
-</code></pre><p>参考资料</p>
-<p><a href="http://www.rsyslog.com/doc/v8-stable/configuration/modules/imuxsock.html" target="_blank" rel="external">http://www.rsyslog.com/doc/v8-stable/configuration/modules/imuxsock.html</a></p>
-<h2 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h2><ul>
-<li>rsyslog 没有对/dev/log监听导致</li>
-</ul>
-<h2 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$vim</span> /etc/rsyslog.conf</div></pre></td></tr></table></figure>
-<p>添加</p>
-<pre><code>$AddUnixListenSocket /dev/log
-</code></pre><p>然后再重启相关服务，正常</p>
-<p>问题解决</p>
-]]></content>
-      
-        <categories>
-            
-            <category> OpenStack </category>
-            
-            <category> Swift </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Linux </tag>
-            
-            <tag> Rsyslog </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Git .gitignore失效，无法取消某文件/文件夹跟踪，或无法跟踪某文件/文件夹的问题解决]]></title>
-      <url>http://byliu.github.io/2016/03/30/Git-gitignore%E5%A4%B1%E6%95%88%EF%BC%8C%E6%97%A0%E6%B3%95%E5%8F%96%E6%B6%88%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E8%B7%9F%E8%B8%AA%EF%BC%8C%E6%88%96%E6%97%A0%E6%B3%95%E8%B7%9F%E8%B8%AA%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E7%9A%84%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/</url>
-      <content type="html"><![CDATA[<h2 id="问题一"><a href="#问题一" class="headerlink" title="问题一"></a>问题一</h2><p>明明在.gitignore文件中设置了取消跟踪某文件，每次git status时却总能看到它，仿佛.gitignore对它不起作用一样</p>
-<p>原因分析：我们要知道的是，.gitignore只对未被track的文件有效，也就是说，一个文件如果已经被跟踪并加入缓存中后，后面如果想要取消该文件的跟踪的话，直接将其加入.gitignore文件中是不行的，我们需要先将其从本地缓存中删除它，然后再添加进.gitignore忽略</p>
-<p>具体执行命令</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$git</span> rm -r --cached dir</div></pre></td></tr></table></figure>
-<p>然后我们再git status查看，是不是发现已经看不到该文件了，问题一解决</p>
-<a id="more"></a>
-<h2 id="问题二"><a href="#问题二" class="headerlink" title="问题二"></a>问题二</h2><p>场景：A项目下有一个子项目B，两个项目都由Git管理</p>
-<p>其目录结构大概如下</p>
-<pre><code>A/
-----.git/
-----dir/
-----B/
-    ----.git/
-    ----dir/
-</code></pre><p>然后我们A项目git push提交Github托管，问题来了，我们登陆Github查看A项目时发现，A下面的B文件夹是空的</p>
-<p>为什么呢，原因其实很简单，因为B目录下有.git时，git会自动忽略该目录下的所有文件，导致我们push了一个空目录</p>
-<p>这样的话解决思路也很简单了，删除B目录下的.git(删除.git的操作是十分危险的，这里是为了举例说明，不要轻易模仿)，然后再重新添加</p>
-<p>完成后再push，我们发现B目录还是空的！并且我们检查.gitignore文件，发现B目录并没有被添加进去，好像.gitignore又失效了一样</p>
-<p>原因分析：git add 添加文件时，git扫描到B目录下的.git文件后，跟踪B目录，并忽略B目录下的子文件，也就是说，git把B这个空文件夹加进了缓存里，后面对B文件下的子文件的操作都会被忽略，删除B目录下的.git后，B目录下的子文件仍然处于被忽略状态</p>
-<p>解决办法和上面一样，我们删除B目录下的.git后，删除本地缓存</p>
-<p>执行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$git</span> rm -r --cached dirB</div></pre></td></tr></table></figure>
-<p>然后再重新Add、commit、push，问题解决</p>
-]]></content>
-      
-        <categories>
-            
-            <category> Git </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Git </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Rsyslog没有日志输出]]></title>
-      <url>http://byliu.github.io/2016/03/30/Rsyslog%E6%B2%A1%E6%9C%89%E6%97%A5%E5%BF%97%E8%BE%93%E5%87%BA/</url>
-      <content type="html"><![CDATA[<p>最近在给私有云存储集群扩容，添加新机器的时候，发现相关日志没有打印出来，而业务功能上是正常的，怀疑是日志打印这块出了问题</p>
-<p>机器打印日志用的是rsyslog模块，检查对比了相关配置项后未发现问题，rsyslog进程也正常，未报错，比较奇怪的现象</p>
-<p>思索无果下，就只能一步一步看日志来尝试解决了</p>
-<a id="more"></a>
-<p>查看/var/log/messages，最后一条日志是</p>
-<pre><code>Mar 30 00:19:12 localhost rsyslogd: [origin software=&quot;rsyslogd&quot; swVersion=&quot;7.4.7&quot; x-pid=&quot;903&quot; x-info=&quot;http://www.rsyslog.com&quot;] exiting on signal 15.
-</code></pre><p>这里初现端倪，在凌晨的时候rsyslogd进程莫名退出了</p>
-<p>原因呢，不清楚，Google it，找到了些资料，</p>
-<p>参考</p>
-<p><a href="http://askubuntu.com/questions/249490/rsyslogd-stopped-writing-to-var-log-syslog-two-days-ago" target="_blank" rel="external">http://askubuntu.com/questions/249490/rsyslogd-stopped-writing-to-var-log-syslog-two-days-ago</a></p>
-<p><a href="https://bugzilla.redhat.com/show_bug.cgi?id=1116864" target="_blank" rel="external">https://bugzilla.redhat.com/show_bug.cgi?id=1116864</a></p>
-<p>看来还是配置项的问题</p>
-<p>rsyslog 3.21.1以上支持“配置验证模式”。在这种模式下，它解释和检查配置文件，但不启动。</p>
-<p>也就是说我们可以通过执行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$/path/to/rsyslogd -f/path/to/config-file -N1</div></pre></td></tr></table></figure>
-<p>来检查我们的配置文件是否有误</p>
-<p>配置文件在/etc/rsyslog.d/下，根据资料我们执行</p>
-<pre><code>[root@swift-node1 rsyslog.d]# rsyslogd -f/etc/rsyslog.d/listen.conf -N1
-rsyslogd: version 7.4.7, config validation run (level 1), master config /etc/rsyslog.d/listen.conf
-rsyslogd: invalid or yet-unknown config file command &apos;SystemLogSocketName&apos; - have you forgotten to load a module? [try http://www.rsyslog.com/e/3003 ]
-rsyslogd: CONFIG ERROR: there are no active actions configured. Inputs will run, but no output whatsoever is created. [try http://www.rsyslog.com/e/2103 ]
-rsyslogd: run failed with error -2103 (see rsyslog.h or try http://www.rsyslog.com/e/2103 to learn what that number means)
-</code></pre><p>嗯，报错了</p>
-<p>看到这怀疑可能是/etc/rsyslog.d/listen.conf配置文件的问题了，</p>
-<p>删除(记得备份)</p>
-<pre><code>/etc/rsyslog.d/listen.conf
-</code></pre><p>然后重启rsyslog服务，再重启相关业务，发现相关日志已经有了，问题解决</p>
-]]></content>
-      
-        <categories>
-            
-            <category> Linux </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Linux </tag>
-            
-            <tag> Rsyslog </tag>
-            
-        </tags>
-        
-    </entry>
-    
-  
-  
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>负载均衡</tag>
+      </tags>
+  </entry>
 </search>

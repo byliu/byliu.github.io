@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css">
 
 
-  <meta name="keywords" content="Linux,负载均衡,">
+  <meta name="keywords" content="Codex,Agent,macOS,自动化,权限,">
 
 
 
@@ -59,27 +59,18 @@
 
 
 
-<meta name="description" content="前言介绍常用的负载均衡手段 初步方案与问题haproxy + keepalived 实现负载均衡和高可用 问题： haproxy 节点容易成为瓶颈  所以我们需要更有效的方案">
-<meta name="keywords" content="Linux,负载均衡">
+<meta name="description" content="背景我平时把 Codex 跑在 iTerm2 里。一个很实际的问题是：当它跑完任务，或者执行过程中需要我介入时，我不一定一直盯着终端窗口。 需求很简单：  任务完成时，给我一个系统级提醒 需要我授权、补信息、做决策时，也给我一个系统级提醒 最好像微信新消息一样，直接出现在 macOS 通知中心">
+<meta name="keywords" content="Codex,Agent,macOS,自动化,权限">
 <meta property="og:type" content="article">
-<meta property="og:title" content="对象存储与负载均衡">
-<meta property="og:url" content="http://byliu.github.io/2018/03/12/对象存储与负载均衡/index.html">
+<meta property="og:title" content="给 Codex 加上系统通知：从沙箱限制到默认授权">
+<meta property="og:url" content="http://byliu.github.io/2026/03/09/codex-notification-strategy/index.html">
 <meta property="og:site_name" content="Byliu&#39;s Blog">
-<meta property="og:description" content="前言介绍常用的负载均衡手段 初步方案与问题haproxy + keepalived 实现负载均衡和高可用 问题： haproxy 节点容易成为瓶颈  所以我们需要更有效的方案">
+<meta property="og:description" content="背景我平时把 Codex 跑在 iTerm2 里。一个很实际的问题是：当它跑完任务，或者执行过程中需要我介入时，我不一定一直盯着终端窗口。 需求很简单：  任务完成时，给我一个系统级提醒 需要我授权、补信息、做决策时，也给我一个系统级提醒 最好像微信新消息一样，直接出现在 macOS 通知中心">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/现网方案与问题.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/Load Blance.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/基于RR-DNS的解决方法.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/基于客户端的解决方法.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/基于应用层的解决办法.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/LVS之NAT实现（VS:NAT）.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/LVS之IP隧道实现（VS:TUN）.png">
-<meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/LVS之直接路由实现（VS:DR）.png">
-<meta property="og:updated_time" content="2026-03-09T08:59:19.999Z">
+<meta property="og:updated_time" content="2026-03-09T09:00:57.002Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="对象存储与负载均衡">
-<meta name="twitter:description" content="前言介绍常用的负载均衡手段 初步方案与问题haproxy + keepalived 实现负载均衡和高可用 问题： haproxy 节点容易成为瓶颈  所以我们需要更有效的方案">
-<meta name="twitter:image" content="http://byliu.bj.openstorage.cn/byliu/现网方案与问题.png">
+<meta name="twitter:title" content="给 Codex 加上系统通知：从沙箱限制到默认授权">
+<meta name="twitter:description" content="背景我平时把 Codex 跑在 iTerm2 里。一个很实际的问题是：当它跑完任务，或者执行过程中需要我介入时，我不一定一直盯着终端窗口。 需求很简单：  任务完成时，给我一个系统级提醒 需要我授权、补信息、做决策时，也给我一个系统级提醒 最好像微信新消息一样，直接出现在 macOS 通知中心">
 
 
 
@@ -97,7 +88,7 @@
   };
 </script>
 
-  <title> 对象存储与负载均衡 | Byliu's Blog </title>
+  <title> 给 Codex 加上系统通知：从沙箱限制到默认授权 | Byliu's Blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -260,7 +251,7 @@
             
             
               
-                对象存储与负载均衡
+                给 Codex 加上系统通知：从沙箱限制到默认授权
               
             
           </h1>
@@ -272,8 +263,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-03-12T14:48:38+08:00" content="2018-03-12">
-              2018-03-12
+            <time itemprop="dateCreated" datetime="2026-03-09T17:05:00+08:00" content="2026-03-09">
+              2026-03-09
             </time>
           </span>
 
@@ -286,8 +277,20 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
+                  <a href="/categories/AI/" itemprop="url" rel="index">
+                    <span itemprop="name">AI</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/AI/Agent/" itemprop="url" rel="index">
+                    <span itemprop="name">Agent</span>
                   </a>
                 </span>
 
@@ -302,8 +305,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2018/03/12/对象存储与负载均衡/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/03/12/对象存储与负载均衡/" itemprop="commentsCount"></span>
+                <a href="/2026/03/09/codex-notification-strategy/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2026/03/09/codex-notification-strategy/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -325,92 +328,97 @@
       
 
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>介绍常用的负载均衡手段</p>
-<h2 id="初步方案与问题"><a href="#初步方案与问题" class="headerlink" title="初步方案与问题"></a>初步方案与问题</h2><p>haproxy + keepalived 实现负载均衡和高可用</p>
-<p>问题：</p>
-<p>haproxy 节点容易成为瓶颈</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/现网方案与问题.png" alt="现网方案与问题"></p>
-<p>所以我们需要更有效的方案</p>
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我平时把 Codex 跑在 iTerm2 里。一个很实际的问题是：当它跑完任务，或者执行过程中需要我介入时，我不一定一直盯着终端窗口。</p>
+<p>需求很简单：</p>
+<ul>
+<li>任务完成时，给我一个系统级提醒</li>
+<li>需要我授权、补信息、做决策时，也给我一个系统级提醒</li>
+<li>最好像微信新消息一样，直接出现在 macOS 通知中心</li>
+</ul>
 <a id="more"></a>
-<h2 id="Load-Balance-介绍"><a href="#Load-Balance-介绍" class="headerlink" title="Load Balance 介绍"></a>Load Balance 介绍</h2><p>在网络服务中，一端是客户程序，另一端是服务程序</p>
-<p>通过 LB 将 client 请求分发到存储入口 swift proxy 上</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/Load Blance.png" alt="Load Blance"></p>
-<h3 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h3><p> 可以在不同的层次上实现多台服务器的负载均衡。用集群解决网络服务性能问题的现有方法主要分为以下四类： </p>
+<h2 id="第一层方案：直接发-macOS-通知"><a href="#第一层方案：直接发-macOS-通知" class="headerlink" title="第一层方案：直接发 macOS 通知"></a>第一层方案：直接发 macOS 通知</h2><p>最自然的做法是直接调用 <code>osascript</code>：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">osascript -e <span class="string">'display notification "任务完成" with title "Codex" subtitle "任务完成" sound name "Glass"'</span></span><br></pre></td></tr></table></figure>
+<p>这样做在本机上是可行的，但很快遇到了第一个问题：<strong>Codex 的沙箱环境里连不上 macOS Notification Center</strong>。</p>
+<p>实际表现是 <code>osascript</code> 能执行，但会报 Notification Center 连接无效之类的错误。也就是说，通知能力不是没有，而是<strong>在沙箱里被系统边界挡住了</strong>。</p>
+<h2 id="第二层方案：改成提权发送"><a href="#第二层方案：改成提权发送" class="headerlink" title="第二层方案：改成提权发送"></a>第二层方案：改成提权发送</h2><p>既然沙箱发不了，下一步自然是改成提权发送：</p>
+<ul>
+<li>正常对话里继续给出文字说明</li>
+<li>到“任务完成”或“需要你协助”的节点时，额外执行一次提权通知</li>
+</ul>
+<p>这解决了沙箱问题，但又出现了第二个矛盾：<strong>如果每次发送通知都先弹一次授权确认，那提醒本身就不再“即时”了。</strong></p>
+<p>换句话说，通知机制本来是为了减少我盯终端的成本，结果如果它自己还要先等我确认，就失去了意义。</p>
+<h2 id="第三层方案：把约定做成全局规则"><a href="#第三层方案：把约定做成全局规则" class="headerlink" title="第三层方案：把约定做成全局规则"></a>第三层方案：把约定做成全局规则</h2><p>另一个现实问题是“新会话不知道这件事”。</p>
+<p>当前会话里说好了“完成或阻塞时要提醒我”，并不代表下一个窗口、下一次新开的 Codex 会话也知道这个约定。要想跨会话生效，必须把这条规则写进<strong>会话外的持久位置</strong>。</p>
+<p>最终我把规则放到了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/.codex/AGENTS.md</span><br></pre></td></tr></table></figure>
+<p>核心约定是：</p>
+<ul>
+<li>每个会话都用中文简体回复</li>
+<li>任务完成或需要用户介入时，除了对话内说明，还要发送 macOS 系统通知</li>
+</ul>
+<p>这一步解决的是“<strong>新会话知不知道要通知</strong>”的问题。</p>
+<h2 id="第四层方案：不要放开任意-osascript，只放开专用通知脚本"><a href="#第四层方案：不要放开任意-osascript，只放开专用通知脚本" class="headerlink" title="第四层方案：不要放开任意 osascript，只放开专用通知脚本"></a>第四层方案：不要放开任意 <code>osascript</code>，只放开专用通知脚本</h2><p>真正稳定的方案不是“默认允许所有 <code>osascript -e</code>”，而是把通知能力收敛到一个固定脚本里。</p>
+<p>原因很直接：</p>
+<ul>
+<li>放开任意 <code>osascript -e</code>，授权范围太宽</li>
+<li>我真正需要默认允许的，其实只有“发一条系统通知”这一件事</li>
+</ul>
+<p>所以最终做法是：</p>
 <ol>
-<li>基于RR-DNS的解决方法</li>
-<li>基于客户端的解决方法</li>
-<li>基于应用层负载均衡调度的解决方法</li>
-<li>基于 IP 层负载均衡调度的解决方法</li>
+<li>写一个专用通知脚本</li>
+<li>把这个脚本加入 Codex 的全局批准前缀规则</li>
+<li>让全局 <code>AGENTS.md</code> 统一要求后续会话调用这个脚本</li>
 </ol>
-<h3 id="基于RR-DNS的解决方法"><a href="#基于RR-DNS的解决方法" class="headerlink" title="基于RR-DNS的解决方法"></a>基于RR-DNS的解决方法</h3><p> 通过RR-DNS（Round-Robin Domain Name System）实现分流</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/基于RR-DNS的解决方法.png" alt="基于RR-DNS的解决方法"></p>
-<p>RR-DNS总结</p>
-<p>优点</p>
+<p>专用脚本如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/zsh</span></span><br><span class="line"><span class="built_in">set</span> -euo pipefail</span><br><span class="line"></span><br><span class="line">message=<span class="string">"<span class="variable">$&#123;1:-Codex 通知&#125;</span>"</span></span><br><span class="line">subtitle=<span class="string">"<span class="variable">$&#123;2:-任务完成&#125;</span>"</span></span><br><span class="line">title=<span class="string">"<span class="variable">$&#123;3:-Codex&#125;</span>"</span></span><br><span class="line"></span><br><span class="line">/usr/bin/osascript - <span class="string">"<span class="variable">$message</span>"</span> <span class="string">"<span class="variable">$subtitle</span>"</span> <span class="string">"<span class="variable">$title</span>"</span> &lt;&lt;<span class="string">'APPLESCRIPT'</span></span><br><span class="line">on run argv</span><br><span class="line">  <span class="built_in">set</span> msgText to item 1 of argv</span><br><span class="line">  <span class="built_in">set</span> subtitleText to item 2 of argv</span><br><span class="line">  <span class="built_in">set</span> titleText to item 3 of argv</span><br><span class="line">  display notification msgText with title titleText subtitle subtitleText sound name <span class="string">"Glass"</span></span><br><span class="line">end run</span><br><span class="line">APPLESCRIPT</span><br></pre></td></tr></table></figure>
+<p>保存路径：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/.codex/bin/codex_notify.sh</span><br></pre></td></tr></table></figure>
+<p>这样做的好处是：<strong>授权对象从“任意 AppleScript”收敛成了“一个固定用途的脚本”。</strong></p>
+<h2 id="第五层方案：为这个脚本加全局批准前缀"><a href="#第五层方案：为这个脚本加全局批准前缀" class="headerlink" title="第五层方案：为这个脚本加全局批准前缀"></a>第五层方案：为这个脚本加全局批准前缀</h2><p>有了专用脚本之后，再把它写进 Codex 的全局规则：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/.codex/rules/default.rules</span><br></pre></td></tr></table></figure>
+<p>增加一条：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">prefix_rule(pattern=[&quot;/Users/baoyiliu/.codex/bin/codex_notify.sh&quot;], decision=&quot;allow&quot;)</span><br></pre></td></tr></table></figure>
+<p>这条规则的含义是：</p>
 <ul>
-<li>部署简单</li>
+<li>后续会话如果要执行这个脚本</li>
+<li>即使它是提权执行</li>
+<li>也不需要再为“发送通知”这件事单独弹确认</li>
 </ul>
-<p>缺点</p>
+<p>到这里，问题就被拆解干净了：</p>
 <ul>
-<li>不能保证后端服务器的负载是均衡的</li>
-<li>用户机器会缓冲从名字到IP地址的映射，同一用户的所有请求都会被发送到同一台机器上</li>
-<li>系统的可靠性和可维护性差，一旦某个服务器出现故障，即使及时修改了 DNS 设置，还是要等待足够的时间（刷新时间）才能发挥作用，在此期间，保存了故障服务器地址的客户计算机将不能正常访问服务器</li>
+<li><code>~/.codex/AGENTS.md</code> 负责让新会话知道“什么时候该通知”</li>
+<li><code>~/.codex/bin/codex_notify.sh</code> 负责把能力收敛到一个固定动作</li>
+<li><code>~/.codex/rules/default.rules</code> 负责让这个固定动作默认获准</li>
 </ul>
-<h3 id="基于客户端的解决方法"><a href="#基于客户端的解决方法" class="headerlink" title="基于客户端的解决方法"></a>基于客户端的解决方法</h3><p>每个客户程序都有一定的服务器集群的知识，进而把以负载均衡的方式将请求发到不同的服务器</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/基于客户端的解决方法.png" alt="基于客户端的解决方法"></p>
-<p>基于客户端方法总结</p>
-<p>缺点</p>
+<h2 id="最终策略"><a href="#最终策略" class="headerlink" title="最终策略"></a>最终策略</h2><p>我最后采用的是下面这套组合：</p>
+<h3 id="1-对话内说明仍然保留"><a href="#1-对话内说明仍然保留" class="headerlink" title="1. 对话内说明仍然保留"></a>1. 对话内说明仍然保留</h3><p>通知只是补充，不替代正常的对话说明。这样即使系统通知被专注模式拦掉，终端里仍然有完整上下文。</p>
+<h3 id="2-只在两个关键节点发通知"><a href="#2-只在两个关键节点发通知" class="headerlink" title="2. 只在两个关键节点发通知"></a>2. 只在两个关键节点发通知</h3><ul>
+<li>任务完成</li>
+<li>需要我介入</li>
+</ul>
+<p>这能避免无意义的通知噪音。</p>
+<h3 id="3-默认走专用脚本"><a href="#3-默认走专用脚本" class="headerlink" title="3. 默认走专用脚本"></a>3. 默认走专用脚本</h3><p>统一调用：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/Users/baoyiliu/.codex/bin/codex_notify.sh <span class="string">"消息内容"</span> <span class="string">"任务完成"</span></span><br></pre></td></tr></table></figure>
+<p>或者：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/Users/baoyiliu/.codex/bin/codex_notify.sh <span class="string">"请确认是否允许执行某操作"</span> <span class="string">"需要你协助"</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-让规则全局生效，而不是只对当前会话生效"><a href="#4-让规则全局生效，而不是只对当前会话生效" class="headerlink" title="4. 让规则全局生效，而不是只对当前会话生效"></a>4. 让规则全局生效，而不是只对当前会话生效</h3><p>这样新开窗口、新会话时，不需要重新解释一遍“完成时提醒我”。</p>
+<h2 id="这套方案的边界"><a href="#这套方案的边界" class="headerlink" title="这套方案的边界"></a>这套方案的边界</h2><p>它已经足够实用，但也有边界：</p>
 <ul>
-<li>需要另外维护一套 nameserver 之类的服务</li>
-<li>需要客户端配合</li>
-<li>nameserver 的性能直接影响服务请求性能</li>
+<li>如果一个旧会话在规则写入前就已经启动，它不会自动刷新自己读过的指令</li>
+<li>如果 macOS 开了专注模式，通知可能不会以横幅形式出现</li>
+<li>如果未来 Codex 的权限模型变化，前缀规则可能需要调整</li>
+<li>这套方案解决的是“通知授权”和“跨会话约定”，不是任意命令的默认提权</li>
 </ul>
-<h3 id="基于应用层的解决方法"><a href="#基于应用层的解决方法" class="headerlink" title="基于应用层的解决方法"></a>基于应用层的解决方法</h3><p>在前端有一个基于应用层的负载调度器。当用户访问请求到达调度器时，请求会提交给作负载均衡调度的应用程序，分析请求，根据各个服务器的负载情况，选出一台服务器，重写请求并向选出的服务器访问，取得结果后，再返回给用户</p>
-<p>现网中用的就是这个方案</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/基于应用层的解决办法.png" alt="基于应用层的解决方法"></p>
-<p>应用层方案总结</p>
-<p>缺点</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这件事里最关键的认知转变是：</p>
+<p><strong>不要追求“默认允许所有提权通知命令”，而是把能力收敛成一个专用脚本，再只对白名单脚本做默认授权。</strong></p>
+<p>这样既保住了体验，也控制住了权限边界。</p>
+<p>如果你也把 Agent 长时间跑在终端里，又不想一直盯着窗口，这套方案基本可以直接复用：</p>
 <ul>
-<li>系统处理开销特别大，致使系统的伸缩性有限。当请求到达负载均衡调度器至处理结束时，调度器需要进行四次从核心到用户空间或从用户空间到核心空间的上下文切换和内存复制；需要进行二次TCP连接，一次是从用户到调度器，另一次是从调度器到真实服务器；需要对请求进行分析和重写。这些处理都需要不小的ＣＰＵ、内存和网络等资源开销，且处理时间长。所构成系统的性能不能接近线性增加的，一般服务器组增至3或4台时，调度器本身可能会成为新的瓶颈。所以，这种基于应用层负载均衡调度的方法的伸缩性极其有限。</li>
-<li>本身会成为整个系统的瓶颈</li>
+<li>用全局 <code>AGENTS.md</code> 约定什么时候提醒</li>
+<li>用专用脚本承载通知动作</li>
+<li>用批准前缀规则给这个动作做默认授权</li>
 </ul>
-<h3 id="基于IP层的解决方法"><a href="#基于IP层的解决方法" class="headerlink" title="基于IP层的解决方法"></a>基于IP层的解决方法</h3><p> 通过报文中的目标地址和端口，再加上负载均衡设备设置的服务器选择方式，决定最终选择的内部服务器</p>
-<p> 开源实例：LVS（Linux Virtual Server）</p>
-<p> LVS具体实现方式有</p>
-<ul>
-<li>NAT实现（VS/NAT）</li>
-<li>IP隧道实现（VS/TUN）</li>
-<li>直接路由实现（VS/DR）</li>
-</ul>
-<h2 id="LVS-简介"><a href="#LVS-简介" class="headerlink" title="LVS 简介"></a>LVS 简介</h2><p>介绍 LVS 的几种模式</p>
-<h3 id="LVS之NAT实现（VS-NAT）"><a href="#LVS之NAT实现（VS-NAT）" class="headerlink" title="LVS之NAT实现（VS/NAT）"></a>LVS之NAT实现（VS/NAT）</h3><p>通过NAT（Network Address Translation，网络地址转换） ，调度器重写请求报文的目标地址，根据预设的调度算法，将请求分派给后端的真实服务器；真实服务器的响应报文通过调度器时，报文的源地址被重写，再返回给客户，完成整个负载调度过程</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/LVS之NAT实现（VS:NAT）.png" alt="LVS之NAT实现（VS/NAT）"></p>
-<p>VS/NAT总结</p>
-<p>优点</p>
-<ul>
-<li>是服务器可以运行任何支持TCP/IP的操作系统，它只需要一个IP地址配置在调度器上，服务器组可以用私有的IP地址</li>
-</ul>
-<p>缺点</p>
-<ul>
-<li>伸缩能力有限， 当服务器结点数到一定规模时，调度器本身有可能成为系统的新瓶颈，因为在 VS/NAT 中请求和响应报文都需要通过负载调度器</li>
-</ul>
-<h3 id="LVS之IP隧道实现（VS-TUN）"><a href="#LVS之IP隧道实现（VS-TUN）" class="headerlink" title="LVS之IP隧道实现（VS/TUN）"></a>LVS之IP隧道实现（VS/TUN）</h3><p>IP隧道（IP tunneling）是将一个IP报文封装在另一个IP报文的技术，这可以使得目标为一个IP地址的数据报文能被封装和转发到另一个IP地址</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/LVS之IP隧道实现（VS:TUN）.png" alt="LVS之IP隧道实现（VS:TUN）"></p>
-<p>VS/TUN总结</p>
-<p>优点</p>
-<ul>
-<li>本身不会成为系统的瓶颈，可以用来构建高性能的超级服务器</li>
-</ul>
-<p>缺点</p>
-<ul>
-<li>所有的服务器必须支持“IP Tunneling”或者“IP Encapsulation”协议</li>
-<li>IP  Tunneling 需要额外的开销，性能上不如 VS/DR</li>
-</ul>
-<h3 id="LVS之直接路由实现（VS-DR）"><a href="#LVS之直接路由实现（VS-DR）" class="headerlink" title="LVS之直接路由实现（VS/DR）"></a>LVS之直接路由实现（VS/DR）</h3><p>与VS/TUN中的类似，但它的报文转发方法有所不同， VS/DR通过改写请求报文的MAC地址，将请求发送到后端服务器，而后端服务器将响应直接返回给客户，要求调度器和后端服务器在同一物理网段内</p>
-<p><img src="http://byliu.bj.openstorage.cn/byliu/LVS之直接路由实现（VS:DR）.png" alt="LVS之直接路由实现（VS:DR）"></p>
-<p>VS/DR总结</p>
-<ul>
-<li>跟VS/TUN相比，这种方法没有IP隧道的开销，但是要求负载调度器与实际服务器都有一块网卡连在同一物理网段上，服务器网络设备（或者设备别名）不作ARP响应，或者能将报文重定向（Redirect）到本地的Socket端口上</li>
-</ul>
+<p>最后得到的效果就是：<strong>Agent 在该找你的时候，真的能像一条新消息一样把你叫回来。</strong></p>
 
       
     </div>
@@ -425,9 +433,15 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Linux/" rel="tag">#Linux</a>
+            <a href="/tags/Codex/" rel="tag">#Codex</a>
           
-            <a href="/tags/负载均衡/" rel="tag">#负载均衡</a>
+            <a href="/tags/Agent/" rel="tag">#Agent</a>
+          
+            <a href="/tags/macOS/" rel="tag">#macOS</a>
+          
+            <a href="/tags/自动化/" rel="tag">#自动化</a>
+          
+            <a href="/tags/权限/" rel="tag">#权限</a>
           
         </div>
       
@@ -436,17 +450,13 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/01/16/一致性哈希算法在Swift中的应用/" rel="next" title="一致性哈希算法在Swift中的应用">
-                <i class="fa fa-chevron-left"></i> 一致性哈希算法在Swift中的应用
+              <a href="/2018/03/12/对象存储与负载均衡/" rel="next" title="对象存储与负载均衡">
+                <i class="fa fa-chevron-left"></i> 对象存储与负载均衡
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2026/03/09/codex-notification-strategy/" rel="prev" title="给 Codex 加上系统通知：从沙箱限制到默认授权">
-                给 Codex 加上系统通知：从沙箱限制到默认授权 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -611,7 +621,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初步方案与问题"><span class="nav-number">2.</span> <span class="nav-text">初步方案与问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Load-Balance-介绍"><span class="nav-number">3.</span> <span class="nav-text">Load Balance 介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本方法"><span class="nav-number">3.1.</span> <span class="nav-text">基本方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于RR-DNS的解决方法"><span class="nav-number">3.2.</span> <span class="nav-text">基于RR-DNS的解决方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于客户端的解决方法"><span class="nav-number">3.3.</span> <span class="nav-text">基于客户端的解决方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于应用层的解决方法"><span class="nav-number">3.4.</span> <span class="nav-text">基于应用层的解决方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于IP层的解决方法"><span class="nav-number">3.5.</span> <span class="nav-text">基于IP层的解决方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LVS-简介"><span class="nav-number">4.</span> <span class="nav-text">LVS 简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS之NAT实现（VS-NAT）"><span class="nav-number">4.1.</span> <span class="nav-text">LVS之NAT实现（VS/NAT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS之IP隧道实现（VS-TUN）"><span class="nav-number">4.2.</span> <span class="nav-text">LVS之IP隧道实现（VS/TUN）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS之直接路由实现（VS-DR）"><span class="nav-number">4.3.</span> <span class="nav-text">LVS之直接路由实现（VS/DR）</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第一层方案：直接发-macOS-通知"><span class="nav-number">2.</span> <span class="nav-text">第一层方案：直接发 macOS 通知</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第二层方案：改成提权发送"><span class="nav-number">3.</span> <span class="nav-text">第二层方案：改成提权发送</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第三层方案：把约定做成全局规则"><span class="nav-number">4.</span> <span class="nav-text">第三层方案：把约定做成全局规则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第四层方案：不要放开任意-osascript，只放开专用通知脚本"><span class="nav-number">5.</span> <span class="nav-text">第四层方案：不要放开任意 osascript，只放开专用通知脚本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#第五层方案：为这个脚本加全局批准前缀"><span class="nav-number">6.</span> <span class="nav-text">第五层方案：为这个脚本加全局批准前缀</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#最终策略"><span class="nav-number">7.</span> <span class="nav-text">最终策略</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-对话内说明仍然保留"><span class="nav-number">7.1.</span> <span class="nav-text">1. 对话内说明仍然保留</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-只在两个关键节点发通知"><span class="nav-number">7.2.</span> <span class="nav-text">2. 只在两个关键节点发通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-默认走专用脚本"><span class="nav-number">7.3.</span> <span class="nav-text">3. 默认走专用脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-让规则全局生效，而不是只对当前会话生效"><span class="nav-number">7.4.</span> <span class="nav-text">4. 让规则全局生效，而不是只对当前会话生效</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#这套方案的边界"><span class="nav-number">8.</span> <span class="nav-text">这套方案的边界</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">9.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">
@@ -886,9 +896,9 @@
 
     <script type="text/javascript">
       var disqus_shortname = 'byliu';
-      var disqus_identifier = '2018/03/12/对象存储与负载均衡/';
-      var disqus_title = '对象存储与负载均衡';
-      var disqus_url = 'http://byliu.github.io/2018/03/12/对象存储与负载均衡/';
+      var disqus_identifier = '2026/03/09/codex-notification-strategy/';
+      var disqus_title = '给 Codex 加上系统通知：从沙箱限制到默认授权';
+      var disqus_url = 'http://byliu.github.io/2026/03/09/codex-notification-strategy/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');

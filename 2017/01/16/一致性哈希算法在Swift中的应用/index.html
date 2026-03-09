@@ -6,19 +6,15 @@
 
 
 <html class="theme-next pisces use-motion">
-<head>
-  <meta charset="UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 
 
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
-
-
-
-
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
 
 
 
@@ -27,7 +23,11 @@
 
 
 
-  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
 
 
 
@@ -36,23 +36,23 @@
 
 
 
-<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
 
-<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
-
-
-  <meta name="keywords" content="OpenStack Swift,一致性哈希," />
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css">
 
 
-
-
-
-  <link rel="alternate" href="/atom.xml" title="Byliu's Blog" type="application/atom+xml" />
+  <meta name="keywords" content="OpenStack Swift,一致性哈希,">
 
 
 
 
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+  <link rel="alternate" href="/atom.xml" title="Byliu's Blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0">
 
 
 
@@ -66,13 +66,14 @@
 <meta property="og:url" content="http://byliu.github.io/2017/01/16/一致性哈希算法在Swift中的应用/index.html">
 <meta property="og:site_name" content="Byliu&#39;s Blog">
 <meta property="og:description" content="Created by byliu@iflytek.com  前言在分布式对象存储中，一个关键问题是数据该如何存放。Swift是基于一致性哈希技术，通过计算可将对象均匀分布到虚拟空间的虚拟节点上，在增加或删除节点时可大大减少需移动的数据量。本文主要介绍一致性哈希在云存储Swift中具体应用。 正文普通哈希算法与场景分析先来看一个简单的例子，假设我们手里有N台存储服务器（以下简称node），打算用于">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/普通HASH移动数据.gif">
 <meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/哈希环空间.png">
 <meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/一致性哈希算法的数据移动.png">
 <meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/两节点不平衡环.png">
 <meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/虚拟节点.jpg">
 <meta property="og:image" content="http://byliu.bj.openstorage.cn/byliu/对象、虚结点、节点间的映射关系.jpg">
-<meta property="og:updated_time" content="2017-01-16T10:25:31.000Z">
+<meta property="og:updated_time" content="2026-03-09T09:05:29.293Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一致性哈希算法在Swift中的应用">
 <meta name="twitter:description" content="Created by byliu@iflytek.com  前言在分布式对象存储中，一个关键问题是数据该如何存放。Swift是基于一致性哈希技术，通过计算可将对象均匀分布到虚拟空间的虚拟节点上，在增加或删除节点时可大大减少需移动的数据量。本文主要介绍一致性哈希在云存储Swift中具体应用。 正文普通哈希算法与场景分析先来看一个简单的例子，假设我们手里有N台存储服务器（以下简称node），打算用于">
@@ -123,7 +124,7 @@
   
 
   <div class="custom-logo-site-title">
-    <a href="/"  class="brand" rel="start">
+    <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
       <span class="site-title">Byliu's Blog</span>
       <span class="logo-line-after"><i></i></span>
@@ -150,7 +151,7 @@
         <li class="menu-item menu-item-home">
           <a href="/" rel="section">
             
-              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br>
             
             首页
           </a>
@@ -160,7 +161,7 @@
         <li class="menu-item menu-item-archives">
           <a href="/archives" rel="section">
             
-              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br>
             
             归档
           </a>
@@ -170,7 +171,7 @@
         <li class="menu-item menu-item-categories">
           <a href="/categories" rel="section">
             
-              <i class="menu-item-icon fa fa-th fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-th fa-fw"></i> <br>
             
             分类
           </a>
@@ -180,7 +181,7 @@
         <li class="menu-item menu-item-tags">
           <a href="/tags" rel="section">
             
-              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br>
             
             标签
           </a>
@@ -190,7 +191,7 @@
         <li class="menu-item menu-item-about">
           <a href="/about" rel="section">
             
-              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br>
             
             关于
           </a>
@@ -203,7 +204,7 @@
             <a href="#" class="popup-trigger">
           
             
-              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
             
             搜索
           </a>
@@ -275,7 +276,7 @@
           </span>
 
           
-            <span class="post-category" >
+            <span class="post-category">
               &nbsp; | &nbsp;
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -335,7 +336,7 @@
 
       
         <blockquote>
-<p>Created by byliu@iflytek.com</p>
+<p>Created by <a href="mailto:byliu@iflytek.com" target="_blank" rel="noopener">byliu@iflytek.com</a></p>
 </blockquote>
 <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在分布式对象存储中，一个关键问题是数据该如何存放。Swift是基于<strong>一致性哈希</strong>技术，通过计算可将对象均匀分布到虚拟空间的虚拟节点上，在增加或删除节点时可大大减少需移动的数据量。本文主要介绍一致性哈希在云存储Swift中具体应用。</p>
 <h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><h3 id="普通哈希算法与场景分析"><a href="#普通哈希算法与场景分析" class="headerlink" title="普通哈希算法与场景分析"></a>普通哈希算法与场景分析</h3><p>先来看一个简单的例子，假设我们手里有N台存储服务器（以下简称node），打算用于图片文件存储，为了使服务器的负载均衡，需要把对象均匀地映射到每台服务器上，通常会使用哈希算法来实现，计算步骤如下：</p>
@@ -350,7 +351,7 @@
 <p>通过简单的计算我们可以发现，为了提高集群1%的存储能力，我们需要移动9900989个数据项，也就是99.01%的数据项！显然，这种算法严重地影响了系统的性能和可扩展性。</p>
 <p><img src="http://byliu.bj.openstorage.cn/byliu/普通HASH移动数据.gif" alt="增加1%的存储能力=移动99%的数据" title="增加1%的存储能力=移动99%的数据"></p>
 <p>一致性哈希算法就是为了解决这个问题而来。</p>
-<h3 id="一致性哈希算法"><a href="#一致性哈希算法" class="headerlink" title="一致性哈希算法"></a>一致性哈希算法</h3><p>一致性哈希算法是由D. Darger、E. Lehman和T. Leighton 等人于1997年在论文 <a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="external">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a> 首次提出，目的主要是为了解决分布式网络中的热点问题。在其论文中，提出了一致性哈希算法并给出了衡量一个哈希算法的4个指标：</p>
+<h3 id="一致性哈希算法"><a href="#一致性哈希算法" class="headerlink" title="一致性哈希算法"></a>一致性哈希算法</h3><p>一致性哈希算法是由D. Darger、E. Lehman和T. Leighton 等人于1997年在论文 <a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="noopener">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a> 首次提出，目的主要是为了解决分布式网络中的热点问题。在其论文中，提出了一致性哈希算法并给出了衡量一个哈希算法的4个指标：</p>
 <ul>
 <li>平衡性(Balance)<ul>
 <li>平衡性是指Hash的结果能够尽可能分布均匀，充分利用所有缓存空间。</li>
@@ -402,21 +403,21 @@
 <h3 id="权重-weight"><a href="#权重-weight" class="headerlink" title="权重(weight)"></a>权重(weight)</h3><p>基于虚拟节点(partition)，引入weight的概念，目的是“能者多劳”：解决未来添加存储能力更大的node时，使得可以分配到更多的虚拟节点(partition)。例如，2T 容量的node的虚拟节点(partition)数为1T的两倍。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上就是一致性哈希算法在云存储swift中的应用了，swift中的核心组件——Ring的实现就是基于此，当然Ring在实现上还有更多细节上优化的地方，这里略过不讲。</p>
 <p>一致性哈希算法除了在云存储swift中解决存储数据节点均衡问题外，在很多场景下也得到了应用，比如分布式cache系统(参考资料1)、服务器均衡(参考资料3)等。</p>
-<p>本文只是简要介绍了这个算法，更深入的内容可以参看论文<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="external">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a>，同时提供一个<a href="http://www.codeproject.com/Articles/56138/Consistent-hashing" target="_blank" rel="external">C语言版本的实现</a>供参考。</p>
+<p>本文只是简要介绍了这个算法，更深入的内容可以参看论文<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="noopener">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a>，同时提供一个<a href="http://www.codeproject.com/Articles/56138/Consistent-hashing" target="_blank" rel="noopener">C语言版本的实现</a>供参考。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
-<li><p>核心论文：<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="external">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a></p>
+<li><p>核心论文：<a href="https://www.akamai.com/us/en/multimedia/documents/technical-publication/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf" target="_blank" rel="noopener">Consistent Hashing and Random Trees:Distributed Caching Protocols for Relieving Hot Spots On the World Wide Web</a></p>
 </li>
-<li><p><a href="http://blog.csdn.net/kongqz/article/details/6695417" target="_blank" rel="external">memcache的一致性hash算法使用</a></p>
+<li><p><a href="http://blog.csdn.net/kongqz/article/details/6695417" target="_blank" rel="noopener">memcache的一致性hash算法使用</a></p>
 </li>
-<li><p><a href="http://www.cnblogs.com/haippy/archive/2011/12/10/2282943.html" target="_blank" rel="external">一致性Hash算法背景</a></p>
+<li><p><a href="http://www.cnblogs.com/haippy/archive/2011/12/10/2282943.html" target="_blank" rel="noopener">一致性Hash算法背景</a></p>
 </li>
-<li><p><a href="http://blog.csdn.net/caigen1988/article/details/7708806" target="_blank" rel="external">一致性哈希算法（用于解决服务器均衡问题）</a></p>
+<li><p><a href="http://blog.csdn.net/caigen1988/article/details/7708806" target="_blank" rel="noopener">一致性哈希算法（用于解决服务器均衡问题）</a></p>
 </li>
-<li><p><a href="http://blog.csdn.net/cywosp/article/details/23397179/" target="_blank" rel="external">每天进步一点点——五分钟理解一致性哈希算法(consistent hashing)</a></p>
+<li><p><a href="http://blog.csdn.net/cywosp/article/details/23397179/" target="_blank" rel="noopener">每天进步一点点——五分钟理解一致性哈希算法(consistent hashing)</a></p>
 </li>
-<li><p><a href="http://www.cnblogs.com/yuxc/archive/2012/06/22/2558312.html" target="_blank" rel="external">深入云存储系统Swift核心组件：Ring实现原理剖析</a></p>
+<li><p><a href="http://www.cnblogs.com/yuxc/archive/2012/06/22/2558312.html" target="_blank" rel="noopener">深入云存储系统Swift核心组件：Ring实现原理剖析</a></p>
 </li>
-<li><p><a href="http://www.openstack.cn/?p=303" target="_blank" rel="external">一致性哈希算法及其在分布式系统中的应用</a></p>
+<li><p><a href="http://www.openstack.cn/?p=303" target="_blank" rel="noopener">一致性哈希算法及其在分布式系统中的应用</a></p>
 </li>
 </ol>
 
@@ -509,7 +510,7 @@
 
       
         <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
             文章目录
           </li>
           <li class="sidebar-nav-overview" data-target="site-overview">
@@ -520,16 +521,14 @@
 
       <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <img class="site-author-image" itemprop="image"
-               src="/images/scalacat.png"
-               alt="byliu" />
+          <img class="site-author-image" itemprop="image" src="/images/scalacat.png" alt="byliu">
           <p class="site-author-name" itemprop="name">byliu</p>
           <p class="site-description motion-element" itemprop="description">天下万物生于有，有生于无</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-count">7</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -537,7 +536,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -546,7 +545,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">12</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -640,10 +639,10 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright" >
+        <div class="copyright">
   
   &copy;  2015 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2026</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

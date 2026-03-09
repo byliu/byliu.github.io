@@ -2,65 +2,72 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://byliu.github.io/2018/03/12/%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/</loc>
-    
-    <lastmod>2018-03-12T07:39:06.248Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://byliu.github.io/2016/03/30/Rsyslog%E6%B2%A1%E6%9C%89%E6%97%A5%E5%BF%97%E8%BE%93%E5%87%BA/</loc>
-    
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://byliu.github.io/2016/04/04/python-dict%E5%87%A0%E7%A7%8D%E9%81%8D%E5%8E%86%E6%96%B9%E5%BC%8F%E6%80%A7%E8%83%BD%E7%AE%80%E5%8D%95%E6%AF%94%E8%BE%83/</loc>
-    
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://byliu.github.io/2016/03/30/Git-gitignore%E5%A4%B1%E6%95%88%EF%BC%8C%E6%97%A0%E6%B3%95%E5%8F%96%E6%B6%88%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E8%B7%9F%E8%B8%AA%EF%BC%8C%E6%88%96%E6%97%A0%E6%B3%95%E8%B7%9F%E8%B8%AA%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E7%9A%84%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/</loc>
-    
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://byliu.github.io/2017/01/16/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E7%AE%97%E6%B3%95%E5%9C%A8Swift%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8/</loc>
     
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
+    <lastmod>2026-03-09T09:05:29.293Z</lastmod>
     
   </url>
   
   <url>
-    <loc>http://byliu.github.io/2016/04/04/swift%E6%97%A5%E5%BF%97%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E5%87%BA%E9%94%99-socket-error-Errno-111-Connection-refused/</loc>
+    <loc>http://byliu.github.io/2026/03/09/codex-notification-strategy/</loc>
     
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://byliu.github.io/about/index.html</loc>
-    
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://byliu.github.io/categories/index.html</loc>
-    
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
+    <lastmod>2026-03-09T09:00:57.002Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://byliu.github.io/tags/index.html</loc>
     
-    <lastmod>2017-01-16T10:25:31.000Z</lastmod>
+    <lastmod>2026-03-09T08:59:20.002Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/categories/index.html</loc>
+    
+    <lastmod>2026-03-09T08:59:20.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/2018/03/12/%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/</loc>
+    
+    <lastmod>2026-03-09T08:59:19.999Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/about/index.html</loc>
+    
+    <lastmod>2026-03-09T08:59:19.999Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/2016/04/04/swift%E6%97%A5%E5%BF%97%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD%E5%87%BA%E9%94%99-socket-error-Errno-111-Connection-refused/</loc>
+    
+    <lastmod>2026-03-09T08:59:19.998Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/2016/03/30/Rsyslog%E6%B2%A1%E6%9C%89%E6%97%A5%E5%BF%97%E8%BE%93%E5%87%BA/</loc>
+    
+    <lastmod>2026-03-09T08:59:19.997Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/2016/03/30/Git-gitignore%E5%A4%B1%E6%95%88%EF%BC%8C%E6%97%A0%E6%B3%95%E5%8F%96%E6%B6%88%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E8%B7%9F%E8%B8%AA%EF%BC%8C%E6%88%96%E6%97%A0%E6%B3%95%E8%B7%9F%E8%B8%AA%E6%9F%90%E6%96%87%E4%BB%B6-%E6%96%87%E4%BB%B6%E5%A4%B9%E7%9A%84%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3/</loc>
+    
+    <lastmod>2026-03-09T08:59:19.997Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://byliu.github.io/2016/04/04/python-dict%E5%87%A0%E7%A7%8D%E9%81%8D%E5%8E%86%E6%96%B9%E5%BC%8F%E6%80%A7%E8%83%BD%E7%AE%80%E5%8D%95%E6%AF%94%E8%BE%83/</loc>
+    
+    <lastmod>2026-03-09T08:59:19.997Z</lastmod>
     
   </url>
   

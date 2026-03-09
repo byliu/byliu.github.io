@@ -6,19 +6,15 @@
 
 
 <html class="theme-next pisces use-motion">
-<head>
-  <meta charset="UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 
 
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
-
-
-
-
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
 
 
 
@@ -27,7 +23,11 @@
 
 
 
-  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
 
 
 
@@ -36,23 +36,23 @@
 
 
 
-<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
 
-<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
-
-
-  <meta name="keywords" content="性能," />
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css">
 
 
-
-
-
-  <link rel="alternate" href="/atom.xml" title="Byliu's Blog" type="application/atom+xml" />
+  <meta name="keywords" content="性能,">
 
 
 
 
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+  <link rel="alternate" href="/atom.xml" title="Byliu's Blog" type="application/atom+xml">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0">
 
 
 
@@ -66,7 +66,8 @@
 <meta property="og:url" content="http://byliu.github.io/2016/04/04/python-dict几种遍历方式性能简单比较/index.html">
 <meta property="og:site_name" content="Byliu&#39;s Blog">
 <meta property="og:description" content="Python中对dict的遍历有很多种方法，本文中对几种方法性能进行比较简单的对比，给大家一个参考 测试环境Windows10 + Python2.7.8 测试代码首先看我们的测试代码">
-<meta property="og:updated_time" content="2017-01-16T10:25:31.000Z">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2026-03-09T08:59:19.997Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="python dict几种遍历方式性能简单比较">
 <meta name="twitter:description" content="Python中对dict的遍历有很多种方法，本文中对几种方法性能进行比较简单的对比，给大家一个参考 测试环境Windows10 + Python2.7.8 测试代码首先看我们的测试代码">
@@ -116,7 +117,7 @@
   
 
   <div class="custom-logo-site-title">
-    <a href="/"  class="brand" rel="start">
+    <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
       <span class="site-title">Byliu's Blog</span>
       <span class="logo-line-after"><i></i></span>
@@ -143,7 +144,7 @@
         <li class="menu-item menu-item-home">
           <a href="/" rel="section">
             
-              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br>
             
             首页
           </a>
@@ -153,7 +154,7 @@
         <li class="menu-item menu-item-archives">
           <a href="/archives" rel="section">
             
-              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br>
             
             归档
           </a>
@@ -163,7 +164,7 @@
         <li class="menu-item menu-item-categories">
           <a href="/categories" rel="section">
             
-              <i class="menu-item-icon fa fa-th fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-th fa-fw"></i> <br>
             
             分类
           </a>
@@ -173,7 +174,7 @@
         <li class="menu-item menu-item-tags">
           <a href="/tags" rel="section">
             
-              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br>
             
             标签
           </a>
@@ -183,7 +184,7 @@
         <li class="menu-item menu-item-about">
           <a href="/about" rel="section">
             
-              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br>
             
             关于
           </a>
@@ -196,7 +197,7 @@
             <a href="#" class="popup-trigger">
           
             
-              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
             
             搜索
           </a>
@@ -268,7 +269,7 @@
           </span>
 
           
-            <span class="post-category" >
+            <span class="post-category">
               &nbsp; | &nbsp;
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -332,7 +333,7 @@
 </code></pre><h2 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h2><p>首先看我们的测试代码</p>
 <a id="more"></a>
 <p>dict_test.py</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># -*- coding: utf-8 -*-</span></div><div class="line"></div><div class="line">l = [(x,x) <span class="keyword">for</span> x <span class="keyword">in</span> xrange(<span class="number">10000000</span>)]</div><div class="line">d = dict(l)  </div><div class="line"></div><div class="line"><span class="keyword">from</span> time <span class="keyword">import</span> clock  </div><div class="line"></div><div class="line">time_list = []</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d</span></div><div class="line"><span class="comment">#该方法内部实现还不清楚，效率很高，感觉和dict.iterkeys()类似，待考证</span></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d:</div><div class="line">    t = i + d[i]</div><div class="line">    <span class="comment">#print "%d, %d" % (i, d[i])</span></div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.keys()</span></div><div class="line"><span class="comment">#调用内置方法dict.keys()，该方法将字典中的键以列表的形式返回</span></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.keys():</div><div class="line">   t = i + d[i]</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.iterkeys()</span></div><div class="line"><span class="comment">#调用内置方法dict.iterkeys()，该方法返回针对键的迭代器</span></div><div class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.iterkeys():</div><div class="line">    t = i + d[i]</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.items()</span></div><div class="line"><span class="comment">#dict.items()，items方法将所有字典项以列表方式返回，这些列表项中的每一项都来自于（键、值），但是在项返回时并没有特殊顺序</span></div><div class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.items():</div><div class="line">    t = k + v</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#print d.iteritems()</span></div><div class="line"><span class="comment">#dict.iteritems()，iteritems作用大致一样，但是会返回一个迭代器对象而不是列表</span></div><div class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.iteritems():</div><div class="line">    t = k + v</div><div class="line">time_list.append(clock())</div><div class="line"><span class="comment">#补充 items()返回的是一个列表，所以当dict很大时会消耗大量内存。在python3中，items()进行了优化，也只返回迭代器，所以取消iteritems方法</span></div><div class="line"></div><div class="line"><span class="comment">#print zip(d.iterkeys(),d.itervalues())</span></div><div class="line"><span class="comment">#zip函数接受任意多个（包括0个和1个）序列作为参数，返回一个tuple列表</span></div><div class="line"><span class="comment">#关于zip函数的详细说明可以参考 http://www.cnblogs.com/frydsh/archive/2012/07/10/2585370.html</span></div><div class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> zip(d.iterkeys(),d.itervalues()):</div><div class="line">    t = k + v</div><div class="line">time_list.append(clock())</div><div class="line"></div><div class="line"><span class="comment">#打印各个方法所花时间</span></div><div class="line">i = <span class="number">0</span></div><div class="line"><span class="keyword">while</span> i &lt; time_list.__len__() - <span class="number">1</span>:</div><div class="line">    <span class="keyword">print</span> <span class="string">"%d: %s"</span> % (i, time_list[i + <span class="number">1</span>] - time_list[i])</div><div class="line">    i = i + <span class="number">1</span></div></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line">l = [(x,x) <span class="keyword">for</span> x <span class="keyword">in</span> xrange(<span class="number">10000000</span>)]</span><br><span class="line">d = dict(l)  </span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> clock  </span><br><span class="line"></span><br><span class="line">time_list = []</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d</span></span><br><span class="line"><span class="comment">#该方法内部实现还不清楚，效率很高，感觉和dict.iterkeys()类似，待考证</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d:</span><br><span class="line">    t = i + d[i]</span><br><span class="line">    <span class="comment">#print "%d, %d" % (i, d[i])</span></span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.keys()</span></span><br><span class="line"><span class="comment">#调用内置方法dict.keys()，该方法将字典中的键以列表的形式返回</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.keys():</span><br><span class="line">   t = i + d[i]</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.iterkeys()</span></span><br><span class="line"><span class="comment">#调用内置方法dict.iterkeys()，该方法返回针对键的迭代器</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> d.iterkeys():</span><br><span class="line">    t = i + d[i]</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.items()</span></span><br><span class="line"><span class="comment">#dict.items()，items方法将所有字典项以列表方式返回，这些列表项中的每一项都来自于（键、值），但是在项返回时并没有特殊顺序</span></span><br><span class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.items():</span><br><span class="line">    t = k + v</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#print d.iteritems()</span></span><br><span class="line"><span class="comment">#dict.iteritems()，iteritems作用大致一样，但是会返回一个迭代器对象而不是列表</span></span><br><span class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> d.iteritems():</span><br><span class="line">    t = k + v</span><br><span class="line">time_list.append(clock())</span><br><span class="line"><span class="comment">#补充 items()返回的是一个列表，所以当dict很大时会消耗大量内存。在python3中，items()进行了优化，也只返回迭代器，所以取消iteritems方法</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#print zip(d.iterkeys(),d.itervalues())</span></span><br><span class="line"><span class="comment">#zip函数接受任意多个（包括0个和1个）序列作为参数，返回一个tuple列表</span></span><br><span class="line"><span class="comment">#关于zip函数的详细说明可以参考 http://www.cnblogs.com/frydsh/archive/2012/07/10/2585370.html</span></span><br><span class="line"><span class="keyword">for</span> k,v <span class="keyword">in</span> zip(d.iterkeys(),d.itervalues()):</span><br><span class="line">    t = k + v</span><br><span class="line">time_list.append(clock())</span><br><span class="line"></span><br><span class="line"><span class="comment">#打印各个方法所花时间</span></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line"><span class="keyword">while</span> i &lt; time_list.__len__() - <span class="number">1</span>:</span><br><span class="line">    <span class="keyword">print</span> <span class="string">"%d: %s"</span> % (i, time_list[i + <span class="number">1</span>] - time_list[i])</span><br><span class="line">    i = i + <span class="number">1</span></span><br></pre></td></tr></table></figure>
 <h2 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h2><p>运行四次</p>
 <pre><code>第一次
 0: 2.55650656968
@@ -469,7 +470,7 @@ for i in d
 
       
         <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
             文章目录
           </li>
           <li class="sidebar-nav-overview" data-target="site-overview">
@@ -480,16 +481,14 @@ for i in d
 
       <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <img class="site-author-image" itemprop="image"
-               src="/images/scalacat.png"
-               alt="byliu" />
+          <img class="site-author-image" itemprop="image" src="/images/scalacat.png" alt="byliu">
           <p class="site-author-name" itemprop="name">byliu</p>
           <p class="site-description motion-element" itemprop="description">天下万物生于有，有生于无</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-count">7</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -497,7 +496,7 @@ for i in d
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -506,7 +505,7 @@ for i in d
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">12</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -600,10 +599,10 @@ for i in d
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright" >
+        <div class="copyright">
   
   &copy;  2015 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2026</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
